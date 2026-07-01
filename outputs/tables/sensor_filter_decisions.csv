@@ -1,0 +1,69 @@
+sensor_id,sensor_name,location_type,lat,lon,keep,exclude_reason
+1,SL71 - Kentmere,outdoor,53.82592,-1.468594,True,
+2,SEE(#2) - UPSURGE - Crossley St,indoor,53.93055,-1.389377,False,indoor; test/experimental
+3,SL050 - Bardsey,outdoor,53.889965,-1.439765,True,
+4,SL055 - Temple Newsam,outdoor,53.785603,-1.455717,True,
+5,SL018 East Ardsley A650,outdoor,53.72537,-1.550685,True,
+6,SL021 Kippax Church Lane,outdoor,53.76725,-1.370674,True,
+7,SL020- Rothwell Community Hub,outdoor,53.747047,-1.47869,True,
+8,SL015 - Garforth Main Street,outdoor,53.793552,-1.388243,True,
+9,Ibadan Outside Sensor  (SL048),outdoor,7.45484,3.95122,False,outside Leeds area
+10,SL042 Manston Grove,outdoor,53.809742,-1.450043,True,
+11,SL047 (OAKLEA),indoor,53.8904,-1.438621,False,indoor
+12,SL002 - NOT DEPLOYED,indoor,53.80583,-1.555835,False,indoor; not deployed
+13,"SL011 - West End Grove, Horsforth",outdoor,53.838055,-1.655033,True,
+14,SL036 - Bramhope,outdoor,53.881374,-1.61613,True,
+15,SL001 Sunnyview Terrace,outdoor,53.774956,-1.565842,True,
+16,SL024 Wetherby Town Centre,outdoor,53.92824,-1.386585,True,
+17,SL019 Cornwall Crescent Rothwell,outdoor,53.753407,-1.485258,True,
+18,SL022 Church Lane Horsforth,outdoor,53.839775,-1.638201,True,
+19,SL033 - Whinmoor Library,outdoor,53.83719,-1.455175,True,
+20,SL030 Tingley Shire Road,outdoor,53.734547,-1.595817,True,
+21,SL016 Scholes Main Street,outdoor,53.825336,-1.42918,True,
+22,SL004 - UPSURGE - Crossley St,indoor,53.930702,-1.389783,False,indoor; test/experimental
+23,"SL034  - Bramley Library, Hough Lane",outdoor,53.810524,-1.630331,True,
+24,"SL032   Armley Library, Stocks Hill",outdoor,53.79726,-1.588292,True,
+25,"International School, Ibadan (SL039)",indoor,7.436188,3.898093,False,outside Leeds area; indoor
+26,SL005 Kirkstall Valley Primary,outdoor,53.80852,-1.586729,True,
+27,SL003 - Corn Exchange Cabinet,outdoor,53.796494,-1.540428,True,
+28,SL017 - Boston Spa Town Centre,outdoor,53.90459,-1.346074,True,
+29,SL035 Armouries Drive,outdoor,53.790092,-1.530075,True,
+30,soundscapes_06   (SL014),indoor,-0.506969,117.15848,False,outside Leeds area; indoor
+31,SL023 Nelson Street Otley,outdoor,53.904984,-1.691808,True,
+32,"SL028 - Spring Gardens, Harewood",outdoor,53.902756,-1.512246,True,
+33,SL051 - Bramham,outdoor,53.86892,-1.31888,True,
+34,SL056 - Infirmary Street/East Parade,outdoor,53.79785,-1.549465,True,
+35,SL058 - SEE Building 10.102,indoor,53.825676,-1.58751,False,indoor
+36,Ibadan Study OUTSIDE (SL052),indoor,53.88824,-1.430587,False,indoor
+37,SL059 - UPSURGE DATA TEST,indoor,53.805077,-1.554896,False,indoor; test/experimental
+38,SL054 - Wetherby Racecourse (replacement),outdoor,53.931427,-1.359587,True,
+39,SL053 - UPSURGE - Crossley St,indoor,53.930454,-1.389116,False,indoor; test/experimental
+40,SL027 - SEE Building (new),outdoor,53.805836,-1.555945,True,
+41,SL060 Middleton Parl,outdoor,53.754295,-1.544839,True,
+42,SL049 - UPSURGE data test,indoor,53.826397,-1.588688,False,indoor; test/experimental
+43,SL013 - NOT DEPLOYED (wifi issues),outdoor,53.80577,-1.5557,False,not deployed
+44,SL008 Westgate Primary,outdoor,53.903084,-1.703357,True,
+45,SL007 Ninelands Primary,outdoor,53.789272,-1.377445,True,
+46,SL045 Collingham,outdoor,53.90851,-1.408953,True,
+47,SL006 - Primrose Hill Primary,outdoor,53.801888,-1.667109,True,
+48,SL037 Lotherton Hall,outdoor,53.819187,-1.319971,True,
+49,SL009 - Roundhay Golf Club,outdoor,53.8364,-1.487316,True,
+50,SL041 - Knowsthorpe Gate,outdoor,53.78599,-1.499725,True,
+51,SL040 Beckett Park,outdoor,53.822186,-1.592632,True,
+53,"SL012 - Fountain Street, Morley",outdoor,53.742184,-1.606196,True,
+54,"SL046 Saddlers Way, Long Marston",outdoor,53.953255,-1.235537,False,outside Leeds area
+55,SL044 Back Granville Terrace,outdoor,53.879246,-1.704354,True,
+56,SL043 - NOT DEPLOYED,indoor,53.889942,-1.439613,False,indoor; not deployed
+57,SL038 Ingram Road Primary,outdoor,53.7844,-1.563732,True,
+58,SL057 Kippax Church Lane Replacement,outdoor,53.76727,-1.370755,True,
+59,SL025 - Oakwood,outdoor,53.826885,-1.501485,True,
+60,SL026 Richmond Avenue,outdoor,53.816566,-1.573675,True,
+61,SL029 Thorpe Primary School,outdoor,53.734047,-1.524721,True,
+62,SL031 Millenium Square,outdoor,53.80158,-1.548049,True,
+63,SL064 - Experimental kit,indoor,53.80577,-1.555869,False,indoor; test/experimental
+65,SL068 - Bracken Edge Primary,outdoor,53.821022,-1.52735,True,
+66,SL061 - UNASSIGNED,indoor,53.889706,-1.439625,False,indoor; test/experimental
+67,SL067 - UPSURGE - Crossley St,indoor,53.930466,-1.389353,False,indoor; test/experimental
+68,Ibadan Study INSIDE (SL065),indoor,7.447285,3.901226,False,outside Leeds area; indoor
+69,SL066  - UPSURGE_highspeed,indoor,53.80582,-1.555455,False,indoor; test/experimental
+70,SL062 Stainburn View,outdoor,53.83886,-1.528167,True,

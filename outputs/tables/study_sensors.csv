@@ -1,0 +1,49 @@
+sensor_id,sensor_name,location_type,lat,lon
+15,SL001 Sunnyview Terrace,outdoor,53.774956,-1.565842
+27,SL003 - Corn Exchange Cabinet,outdoor,53.796494,-1.540428
+26,SL005 Kirkstall Valley Primary,outdoor,53.80852,-1.586729
+47,SL006 - Primrose Hill Primary,outdoor,53.801888,-1.667109
+45,SL007 Ninelands Primary,outdoor,53.789272,-1.377445
+44,SL008 Westgate Primary,outdoor,53.903084,-1.703357
+49,SL009 - Roundhay Golf Club,outdoor,53.8364,-1.487316
+13,"SL011 - West End Grove, Horsforth",outdoor,53.838055,-1.655033
+53,"SL012 - Fountain Street, Morley",outdoor,53.742184,-1.606196
+8,SL015 - Garforth Main Street,outdoor,53.793552,-1.388243
+21,SL016 Scholes Main Street,outdoor,53.825336,-1.42918
+28,SL017 - Boston Spa Town Centre,outdoor,53.90459,-1.346074
+5,SL018 East Ardsley A650,outdoor,53.72537,-1.550685
+17,SL019 Cornwall Crescent Rothwell,outdoor,53.753407,-1.485258
+7,SL020- Rothwell Community Hub,outdoor,53.747047,-1.47869
+6,SL021 Kippax Church Lane,outdoor,53.76725,-1.370674
+18,SL022 Church Lane Horsforth,outdoor,53.839775,-1.638201
+31,SL023 Nelson Street Otley,outdoor,53.904984,-1.691808
+16,SL024 Wetherby Town Centre,outdoor,53.92824,-1.386585
+59,SL025 - Oakwood,outdoor,53.826885,-1.501485
+60,SL026 Richmond Avenue,outdoor,53.816566,-1.573675
+40,SL027 - SEE Building (new),outdoor,53.805836,-1.555945
+32,"SL028 - Spring Gardens, Harewood",outdoor,53.902756,-1.512246
+61,SL029 Thorpe Primary School,outdoor,53.734047,-1.524721
+20,SL030 Tingley Shire Road,outdoor,53.734547,-1.595817
+62,SL031 Millenium Square,outdoor,53.80158,-1.548049
+24,"SL032   Armley Library, Stocks Hill",outdoor,53.79726,-1.588292
+19,SL033 - Whinmoor Library,outdoor,53.83719,-1.455175
+23,"SL034  - Bramley Library, Hough Lane",outdoor,53.810524,-1.630331
+29,SL035 Armouries Drive,outdoor,53.790092,-1.530075
+14,SL036 - Bramhope,outdoor,53.881374,-1.61613
+48,SL037 Lotherton Hall,outdoor,53.819187,-1.319971
+57,SL038 Ingram Road Primary,outdoor,53.7844,-1.563732
+51,SL040 Beckett Park,outdoor,53.822186,-1.592632
+50,SL041 - Knowsthorpe Gate,outdoor,53.78599,-1.499725
+10,SL042 Manston Grove,outdoor,53.809742,-1.450043
+55,SL044 Back Granville Terrace,outdoor,53.879246,-1.704354
+46,SL045 Collingham,outdoor,53.90851,-1.408953
+3,SL050 - Bardsey,outdoor,53.889965,-1.439765
+33,SL051 - Bramham,outdoor,53.86892,-1.31888
+38,SL054 - Wetherby Racecourse (replacement),outdoor,53.931427,-1.359587
+4,SL055 - Temple Newsam,outdoor,53.785603,-1.455717
+34,SL056 - Infirmary Street/East Parade,outdoor,53.79785,-1.549465
+58,SL057 Kippax Church Lane Replacement,outdoor,53.76727,-1.370755
+41,SL060 Middleton Parl,outdoor,53.754295,-1.544839
+70,SL062 Stainburn View,outdoor,53.83886,-1.528167
+65,SL068 - Bracken Edge Primary,outdoor,53.821022,-1.52735
+1,SL71 - Kentmere,outdoor,53.82592,-1.468594
