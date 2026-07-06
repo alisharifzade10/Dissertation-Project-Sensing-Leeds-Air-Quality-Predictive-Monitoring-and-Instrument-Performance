@@ -1,0 +1,5 @@
+match,n_sensors,median_diff_match,pct_negative,median_diff_placebo,day_adjusted_effect
+Croatia (group),9,-0.0,56,-0.91,0.91
+Ghana (group),3,10.06,0,11.27,-1.22
+Panama (group),4,1.59,0,1.47,0.12
+DR Congo (R32),8,-2.13,100,-3.35,1.22

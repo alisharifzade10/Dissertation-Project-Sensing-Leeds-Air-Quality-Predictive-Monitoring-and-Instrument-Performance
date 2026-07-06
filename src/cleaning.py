@@ -1,12 +1,13 @@
 """
-PM2.5 quality flagging, following Byrne et al. (2023).
-Single source for clean_sensor so the notebook and the network batch
-use the identical definition.
+PM2.5 quality flagging (Byrne et al. 2023) and humidity correction
+(Barkjohn et al. 2021). Single source for both, so notebooks and batch
+runs use identical definitions.
 """
 import numpy as np
 import pandas as pd
 
-from src.config import PM_A, PM_B, MAX_PLAUSIBLE, PM_BREAK, REL_HIGH, REL_LOW
+from src.config import (PM_A, PM_B, RH_COL,
+                        MAX_PLAUSIBLE, PM_BREAK, REL_HIGH, REL_LOW)
 
 
 def clean_sensor(df):
@@ -42,3 +43,22 @@ def clean_sensor(df):
     df["is_clean"] = ~(df["flag_implausible"] | df["flag_ab"])
 
     return df, n_dups
+
+
+# --------------------------------------------------------------------------
+# Humidity correction (Barkjohn et al. 2021), applied to the CF=ATM channel
+# following Giordano et al. (2021).
+# --------------------------------------------------------------------------
+BARKJOHN_A  = 0.524
+BARKJOHN_RH = -0.0862
+BARKJOHN_C  = 5.75
+
+
+def apply_humidity_correction(df, pm_col=PM_A, rh_col=RH_COL):
+    """Barkjohn-corrected PM2.5 as a Series.
+
+    RH is in percent. Floored at 0 (PM can't be negative);
+    NaN where RH is missing (no correction possible).
+    """
+    corrected = BARKJOHN_A * df[pm_col] + BARKJOHN_RH * df[rh_col] + BARKJOHN_C
+    return corrected.clip(lower=0).where(df[rh_col].notna())

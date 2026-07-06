@@ -51,6 +51,25 @@ REL_HIGH      = 0.05     # above 15: flag if relative A/B diff > 5%
 REL_LOW       = 0.50     # at/below 15: flag if relative A/B diff > 50%
 
 # --------------------------------------------------------------------------
+# Daily aggregation
+# --------------------------------------------------------------------------
+# Minimum clean readings for a valid daily mean. Chosen from the survival
+# sensitivity check: 180 (~6 h of 2-min data) retains 90.6% of sensor-days
+# and 43/44 sensors; the survival cliff sits between 240 and 360.
+MIN_READINGS_PER_DAY = 180
+
+# --------------------------------------------------------------------------
+# Concentration Similarity Index (Byrne et al. 2024, AMT 17, 5129-5146)
+# --------------------------------------------------------------------------
+# The paper's final calibrated parameters (their Sect. 2.2.3):
+#   relative difference uses the GEOMETRIC MEAN of the pair as denominator;
+#   above PMlim the pair must agree within 20%, at/below within 70%.
+CSI_PM_LIM   = 15        # PM concentration breakpoint (ug/m3)
+CSI_C_UPPER  = 0.2       # strict similarity limit above PMlim
+CSI_C_LOWER  = 0.7       # lenient similarity limit at/below PMlim
+MIN_COMMON_DAYS = 30     # min overlapping days for a pair's CSI to be reported
+MIN_VALID_DAYS      = 100 # minimum valid days for a sensor to be included in the pairwise analysis
+# --------------------------------------------------------------------------
 # Study-area definition (used by the sensor filter)
 # --------------------------------------------------------------------------
 # "Strict Leeds": a bounding box around the Leeds metropolitan area.
