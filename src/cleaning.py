@@ -46,19 +46,34 @@ def clean_sensor(df):
 
 
 # --------------------------------------------------------------------------
-# Humidity correction (Barkjohn et al. 2021), applied to the CF=ATM channel
+# Humidity correction (Barkjohn et al. 2021), applied to the CF=ATM data
 # following Giordano et al. (2021).
+#
+# Barkjohn fitted the equation on the AVERAGE of the two Plantower channels
+# (after their own A/B quality screening), so the default here is (A+B)/2.
+# Correcting a single channel is only appropriate for diagnostics and must
+# be requested explicitly via pm_col.
 # --------------------------------------------------------------------------
 BARKJOHN_A  = 0.524
 BARKJOHN_RH = -0.0862
 BARKJOHN_C  = 5.75
 
 
-def apply_humidity_correction(df, pm_col=PM_A, rh_col=RH_COL):
+def apply_humidity_correction(df, pm_col=None, rh_col=RH_COL):
     """Barkjohn-corrected PM2.5 as a Series.
 
-    RH is in percent. Floored at 0 (PM can't be negative);
-    NaN where RH is missing (no correction possible).
+    pm_col=None (default) uses the mean of channels A and B, matching how
+    the Barkjohn et al. (2021) coefficients were fitted. Pass a column name
+    (e.g. PM_A) to correct a single channel for diagnostic purposes.
+
+    RH is in percent. Floored at 0 (PM can't be negative); NaN where RH is
+    missing (no correction possible). With the default, rows where either
+    channel is missing also come out NaN: a lone unverified channel does
+    not enter the corrected dataset.
     """
-    corrected = BARKJOHN_A * df[pm_col] + BARKJOHN_RH * df[rh_col] + BARKJOHN_C
+    if pm_col is None:
+        pa = (df[PM_A] + df[PM_B]) / 2
+    else:
+        pa = df[pm_col]
+    corrected = BARKJOHN_A * pa + BARKJOHN_RH * df[rh_col] + BARKJOHN_C
     return corrected.clip(lower=0).where(df[rh_col].notna())

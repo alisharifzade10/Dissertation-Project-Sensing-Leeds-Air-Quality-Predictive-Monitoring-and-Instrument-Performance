@@ -1,0 +1,3 @@
+,aurn_site,nearest_sensor,distance_km,n_hours,slope,intercept,pearson_r
+LEED,Leeds Centre,SL031,0.27,673,0.671,-0.32,0.921
+LED6,Headingley Kerbside,SL026,0.42,12611,0.522,-0.86,0.859

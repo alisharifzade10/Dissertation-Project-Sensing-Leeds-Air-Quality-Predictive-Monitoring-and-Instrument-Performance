@@ -58,6 +58,20 @@ REL_LOW       = 0.50     # at/below 15: flag if relative A/B diff > 50%
 # and 43/44 sensors; the survival cliff sits between 240 and 360.
 MIN_READINGS_PER_DAY = 180
 
+# Minimum clean readings for a valid HOURLY mean (~30 expected at 2-min
+# spacing, so this is a 50% completeness rule). Justified by the subsampling
+# test in notebook 04: a contiguous block of 15 readings estimates the true
+# hourly mean to ~4% (90th percentile ~16%), and relaxing the threshold to 5
+# raises network coverage only to ~52%, so hourly resolution fails even in
+# its most permissive form. Used by notebooks 06, 07 and 08.
+MIN_READ_PER_HOUR    = 15
+
+# Minimum sensors reporting in an hour for a network-level statistic
+# (median or baseline) to be formed from them.
+MIN_SENSORS_PER_HOUR = 5
+
+LOCAL_TZ = "Europe/London"    # clock time for diurnal and event analysis
+
 # --------------------------------------------------------------------------
 # Concentration Similarity Index (Byrne et al. 2024, AMT 17, 5129-5146)
 # --------------------------------------------------------------------------
@@ -69,6 +83,30 @@ CSI_C_UPPER  = 0.2       # strict similarity limit above PMlim
 CSI_C_LOWER  = 0.7       # lenient similarity limit at/below PMlim
 MIN_COMMON_DAYS = 30     # min overlapping days for a pair's CSI to be reported
 MIN_VALID_DAYS      = 100 # minimum valid days for a sensor to be included in the pairwise analysis
+
+# --------------------------------------------------------------------------
+# Baseline separation (notebook 07; Lenschow et al. 2001 decomposition)
+# --------------------------------------------------------------------------
+# Quantile ACROSS sensors defining the regional baseline at each hour. The
+# minimum (q=0) would be set by a single sensor and would be won every hour by
+# any sensor reading systematically low, which is the fault being tested for.
+BASELINE_Q      = 0.10
+# Window for the single-site temporal baseline: long enough to span a synoptic
+# episode, short enough to follow seasonal change.
+BASELINE_WINDOW = "7D"
+# Local-clock hours treated as quiet for the instrument-bias diagnostic.
+# Night is a conditioning period, not a definition of clean air: the nocturnal
+# boundary layer is shallow, so emissions accumulate rather than disperse.
+NIGHT_HOURS     = (1, 5)
+
+# --------------------------------------------------------------------------
+# Event analysis (notebook 06)
+# --------------------------------------------------------------------------
+BONFIRE_YEARS = [2022, 2023, 2024, 2025]
+# Excluded from the CONTROL baseline only (neighbouring organised displays);
+# raw time-series plots are unaffected.
+EVENT_EXCLUDE = ["11-03", "11-04", "11-05", "11-06", "11-07"]
+
 # --------------------------------------------------------------------------
 # Study-area definition (used by the sensor filter)
 # --------------------------------------------------------------------------

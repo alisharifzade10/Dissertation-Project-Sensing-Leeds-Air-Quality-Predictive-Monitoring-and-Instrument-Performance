@@ -31,12 +31,12 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 
-# Constants live in config.py so sensitivity tests change them in one place;
-# fall back to the Byrne (2024) values if config predates them.
-try:
-    from src.config import CSI_PM_LIM, CSI_C_UPPER, CSI_C_LOWER, CSI_MIN_COMMON_DAYS
-except ImportError:
-    CSI_PM_LIM, CSI_C_UPPER, CSI_C_LOWER, CSI_MIN_COMMON_DAYS = 15.0, 0.2, 0.7, 30
+# Constants live in config.py so sensitivity tests change them in one place.
+# NOTE: import each name separately and explicitly — an earlier version
+# imported a misspelled name inside one try/except, which silently reverted
+# ALL constants to the fallbacks and would have made config edits no-ops.
+from src.config import CSI_PM_LIM, CSI_C_UPPER, CSI_C_LOWER
+from src.config import MIN_COMMON_DAYS as CSI_MIN_COMMON_DAYS
 
 
 def csi_pair(a, b,
