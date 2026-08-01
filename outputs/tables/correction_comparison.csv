@@ -1,0 +1,5 @@
+,,n_test,MAE,RMSE,slope,intercept,r
+Leeds Centre,Barkjohn,202.0,2.741,3.055,0.652,-0.933,0.885
+Leeds Centre,Local fit,202.0,1.047,1.412,0.806,0.489,0.886
+Headingley Kerbside,Barkjohn,3784.0,3.817,5.749,0.447,-0.545,0.772
+Headingley Kerbside,Local fit,3784.0,1.993,4.219,0.643,2.025,0.782
