@@ -2,7 +2,7 @@
 
 MSc dissertation project, MATH5872M (Data Science and Analytics), University of Leeds.
 
-**Author:** Sharif
+**Author:** Ali Sharifzade
 **Supervisors:** Jim McQuaid (Faculty of Environment), Luisa Cutillo (School of Mathematics)
 
 ---
