@@ -1,0 +1,47 @@
+,traffic_index,evening_excess,site_type,km_from_centre
+SL001,0.01,0.28,residential,2.96
+SL003,-0.1,1.45,commercial / kerbside,0.68
+SL005,-0.09,0.06,school,2.65
+SL006,0.0,0.0,school,7.75
+SL007,-0.01,-0.0,school,11.34
+SL008,0.01,0.22,school,15.31
+SL009,-0.09,-0.15,open / rural,5.76
+SL011,-0.07,0.17,residential,8.15
+SL012,0.05,0.24,residential,7.41
+SL015,-0.07,0.88,commercial / kerbside,10.59
+SL016,-0.0,-0.01,commercial / kerbside,8.38
+SL018,-0.03,0.03,commercial / kerbside,8.27
+SL019,-0.07,0.12,residential,6.64
+SL020,-0.02,0.2,residential,7.47
+SL021,0.09,0.68,residential,12.27
+SL022,0.0,0.0,residential,7.35
+SL023,-0.05,0.49,residential,14.98
+SL024,-0.04,0.29,commercial / kerbside,17.83
+SL025,-0.03,0.32,residential,4.35
+SL026,-0.03,0.23,residential,2.47
+SL027,-0.08,0.15,residential,0.81
+SL028,-0.03,0.01,open / rural,11.71
+SL029,0.07,0.07,school,7.48
+SL031,0.05,-0.02,commercial / kerbside,0.22
+SL032,0.19,0.56,residential,2.58
+SL033,-0.03,0.13,residential,7.45
+SL034,-0.01,0.16,residential,5.46
+SL035,0.11,-0.05,commercial / kerbside,1.65
+SL036,-0.16,0.09,open / rural,10.09
+SL037,-0.01,-0.02,open / rural,15.21
+SL038,-0.05,-0.15,school,1.95
+SL040,-0.13,0.13,open / rural,3.79
+SL041,0.28,-0.07,commercial / kerbside,3.59
+SL042,-0.07,0.33,residential,6.61
+SL044,-0.12,0.25,residential,13.49
+SL045,0.07,0.02,open / rural,15.2
+SL050,0.0,-0.32,open / rural,12.34
+SL051,-0.18,7.44,open / rural,16.96
+SL054,0.18,-0.17,open / rural,19.21
+SL055,0.03,-0.03,open / rural,6.34
+SL056,-0.22,0.97,commercial / kerbside,0.21
+SL057,-0.16,-0.47,residential,12.27
+SL060,0.2,-0.38,open / rural,5.06
+SL062,-0.11,0.17,residential,4.57
+SL068,-0.08,-0.15,school,2.77
+SL017,-0.08,0.23,commercial / kerbside,17.71

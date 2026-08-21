@@ -1,5 +1,0 @@
-match,kickoff_local,match_window_mean,valid_match_hours,control_mean,n_control_days,difference
-Croatia (group),2026-06-17 21:00:00+01:00,1.23,2,1.27,2,-0.04
-Ghana (group),2026-06-23 21:00:00+01:00,,0,1.0,4,
-Panama (group),2026-06-27 22:00:00+01:00,,0,0.9,4,
-DR Congo (R32),2026-07-01 17:00:00+01:00,1.55,2,3.5,2,-1.95

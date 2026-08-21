@@ -1,47 +1,47 @@
-,median_increment,p90_increment,median_measured,valid_hours,km_from_centre,site_type
-SL056,1.93,4.42,3.34,10941,0.21,city centre
-SL019,1.89,5.96,3.48,19412,6.64,inner urban
-SL003,1.81,4.64,3.83,10876,0.68,city centre
-SL051,1.77,17.84,2.96,5369,16.96,rural
-SL027,1.38,4.34,2.73,20974,0.81,city centre
-SL042,1.32,4.33,2.7,12197,6.61,inner urban
-SL015,1.31,5.19,2.84,11188,10.59,suburban
-SL038,1.2,4.21,3.01,8977,1.95,city centre
-SL021,1.18,3.91,2.58,10967,12.27,suburban
-SL035,0.92,4.63,2.97,15520,1.65,city centre
-SL012,0.91,4.04,2.42,24377,7.41,inner urban
-SL020,0.82,3.27,2.41,15559,7.47,inner urban
-SL055,0.78,2.74,2.41,9822,6.34,inner urban
-SL040,0.78,3.05,2.31,14740,3.79,inner urban
-SL068,0.76,2.2,2.9,7210,2.77,city centre
-SL005,0.65,3.11,2.26,12366,2.65,city centre
-SL007,0.65,3.09,2.23,22594,11.34,suburban
-SL017,0.63,2.76,2.14,10953,17.71,rural
-SL026,0.62,2.58,1.42,13476,2.47,city centre
-SL032,0.6,2.5,2.5,3154,2.58,city centre
-SL001,0.59,2.21,2.2,13806,2.96,city centre
-SL034,0.58,2.3,2.29,9840,5.46,inner urban
-SL025,0.54,2.4,2.02,19199,4.35,inner urban
-SL009,0.53,1.89,2.28,3660,5.76,inner urban
-SL041,0.53,3.34,2.18,7779,3.59,inner urban
-SL062,0.52,1.77,1.64,9664,4.57,inner urban
-SL037,0.48,2.76,2.64,4530,15.21,rural
-SL033,0.47,2.89,2.36,10552,7.45,inner urban
-SL011,0.43,1.72,1.73,13264,8.15,suburban
-SL060,0.41,2.92,3.87,735,5.06,inner urban
-SL045,0.4,1.94,1.91,6915,15.2,rural
-SL024,0.39,2.46,1.69,26637,17.83,rural
-SL054,0.37,3.04,2.99,2092,19.21,rural
-SL044,0.32,2.29,1.84,14716,13.49,suburban
-SL031,0.28,1.32,2.16,673,0.22,city centre
-SL023,0.27,1.65,1.78,6113,14.98,suburban
-SL029,0.27,2.74,2.5,4874,7.48,inner urban
-SL016,0.24,1.64,1.45,18765,8.38,suburban
-SL036,0.22,1.92,2.7,2748,10.09,suburban
-SL008,0.21,2.07,1.31,13566,15.31,rural
-SL018,0.13,2.08,1.16,7647,8.27,suburban
-SL028,0.07,1.65,1.58,2278,11.71,suburban
-SL006,0.04,1.82,1.13,11499,7.75,inner urban
-SL022,0.02,2.6,1.2,11978,7.35,inner urban
-SL057,0.0,1.13,2.98,656,12.27,suburban
-SL050,-0.03,0.77,0.02,18099,12.34,suburban
+,median_increment,p90_increment,valid_hours,km_from_centre,site_type
+SL001,0.64,2.22,17686,2.96,residential
+SL003,1.07,3.5,14684,0.68,commercial / kerbside
+SL005,0.56,2.1,15741,2.65,school
+SL006,0.0,1.1,14936,7.75,school
+SL007,0.49,2.28,28239,11.34,school
+SL008,0.18,1.53,18367,15.31,school
+SL009,0.48,1.58,4391,5.76,open / rural
+SL011,0.47,1.75,18805,8.15,residential
+SL012,0.75,3.3,28579,7.41,residential
+SL015,1.05,4.4,12564,10.59,commercial / kerbside
+SL016,0.24,1.45,22325,8.38,commercial / kerbside
+SL018,0.04,1.51,11745,8.27,commercial / kerbside
+SL019,1.48,4.56,22860,6.64,residential
+SL020,0.78,3.0,18142,7.47,residential
+SL021,0.88,3.37,13763,12.27,residential
+SL022,0.0,1.4,15511,7.35,residential
+SL023,0.33,1.7,8635,14.98,residential
+SL024,0.43,2.07,31226,17.83,commercial / kerbside
+SL025,0.48,2.13,25788,4.35,residential
+SL026,0.5,1.76,18916,2.47,residential
+SL027,1.1,3.15,27046,0.81,residential
+SL028,0.03,1.27,2709,11.71,open / rural
+SL029,0.19,2.31,5787,7.48,school
+SL031,0.27,1.0,850,0.22,commercial / kerbside
+SL032,0.46,2.56,5200,2.58,residential
+SL033,0.39,2.3,12994,7.45,residential
+SL034,0.61,2.27,12819,5.46,residential
+SL035,0.79,3.95,18153,1.65,commercial / kerbside
+SL036,0.23,1.8,3087,10.09,open / rural
+SL037,0.4,2.11,5929,15.21,open / rural
+SL038,1.12,3.44,10459,1.95,school
+SL040,0.55,2.31,18900,3.79,open / rural
+SL041,0.46,2.97,9279,3.59,commercial / kerbside
+SL042,0.81,3.11,15930,6.61,residential
+SL044,0.26,1.78,19238,13.49,residential
+SL045,0.47,1.87,8234,15.2,open / rural
+SL050,-0.22,0.32,21752,12.34,open / rural
+SL051,2.22,24.44,6811,16.96,open / rural
+SL054,0.38,3.24,2550,19.21,open / rural
+SL055,0.82,2.84,12057,6.34,open / rural
+SL056,1.5,3.74,15011,0.21,commercial / kerbside
+SL057,0.83,1.88,766,12.27,residential
+SL060,0.39,3.55,1023,5.06,open / rural
+SL062,0.43,1.5,13357,4.57,residential
+SL068,0.73,2.07,8726,2.77,school
+SL017,0.68,2.73,13810,17.71,commercial / kerbside

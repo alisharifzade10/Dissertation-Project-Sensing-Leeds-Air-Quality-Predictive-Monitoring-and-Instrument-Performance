@@ -1,0 +1,5 @@
+site,season,slope_pa_aurn,spearman_r,n_days
+Leeds Centre,DJF,0.583,0.912,341
+Leeds Centre,JJA,0.667,0.882,435
+Leeds Centre,MAM,0.649,0.892,451
+Leeds Centre,SON,0.668,0.891,364

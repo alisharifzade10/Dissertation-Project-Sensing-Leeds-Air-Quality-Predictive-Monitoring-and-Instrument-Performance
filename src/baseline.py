@@ -1,243 +1,211 @@
 """
-Baseline separation for the Leeds PurpleAir network.
+Spatial baseline separation for the Leeds PurpleAir network.
 
-Motivation
-----------
-A PM2.5 reading at any site mixes three things: air blown in from outside the
-city (regional background), the general urban haze, and whatever is happening
-within a few hundred metres of the sensor (a road, a wood burner, a bonfire).
-Comparing raw time series between sites therefore compares mostly the regional
-signal, which every sensor shares, and hides the local differences that make a
-dense network worth deploying at all.
-
-This module splits each series into
-
-    C_i(t) = B(t) + I_i(t)
-
-where B(t) is a baseline common to the network at time t and I_i(t) is the
-local increment at sensor i. The decomposition follows the standard practice
-of separating regional, urban and local contributions to urban particulate
-matter (Lenschow et al., 2001, Atmos. Environ. 35, S23-S33).
-
-Two families of baseline are provided:
-
-* SPATIAL (`network_baseline`) — a low quantile across sensors at each
-  timestamp. Rationale: at any moment the cleanest sites in the network are
-  the ones with no local source active, so their concentration approximates
-  the air everyone is breathing before local additions. Requires a reasonably
-  dense network at that timestamp.
-
-* TEMPORAL (`rolling_baseline`) — a low quantile of a centred time window at a
-  single site. Rationale: local sources are intermittent, so the lower envelope
-  of a site's own record tracks the background it sits in. Works for a single
-  sensor with no network required, but cannot separate a persistent local
-  source from the background.
-
-A note on night-time baselines
-------------------------------
-Taking a quiet night as "background" is intuitive — traffic is minimal between
-about 01:00 and 05:00 — but it is not automatically clean air. The nocturnal
-boundary layer is shallow, so whatever *is* emitted accumulates in a thinner
-volume, and in winter domestic solid-fuel burning peaks in the evening and
-decays overnight. Night is therefore used here as a *conditioning* period for
-isolating instrument behaviour (`instrument_offset`), not as the definition of
-background concentration: during quiet, well-mixed night hours the sensors
-should all be looking at the same air, so any systematic difference between a
-sensor and its network is a property of the instrument rather than of the air.
-
-All functions take and return pandas objects with a tz-aware UTC
-DatetimeIndex, matching `network_hourly_sensors.parquet`.
+Each sensor's hourly value is decomposed as C_i(t) = B(t) + I_i(t), a
+regional background B shared by the network and a local increment I specific
+to sensor i (Lenschow et al., 2001). Functions that estimate a per-sensor
+quantity use a leave-one-out reference so the sensor under test never
+contaminates the baseline it is measured against.
 """
 import numpy as np
 import pandas as pd
 
+from src.config import (
+    BASELINE_Q, MIN_SENSORS_PER_HOUR, MIN_SENSORS_FOR_BASELINE,
+    LOCAL_TZ, NIGHT_HOURS, CSI_PM_LIM, N_NEIGHBOURS,
+)
+
 
 # --------------------------------------------------------------------------
-# Baselines
+# Baselines and references
 # --------------------------------------------------------------------------
-def network_baseline(hm, q=0.10, min_sensors=5):
-    """Spatial baseline: the q-th quantile across sensors at each timestamp.
+def network_baseline(hm, q=BASELINE_Q, min_sensors=MIN_SENSORS_FOR_BASELINE):
+    """Spatial baseline: q-th quantile across sensors at each timestamp.
+    NaN where fewer than min_sensors are reporting.
 
-    Parameters
-    ----------
-    hm : DataFrame (timestamps x sensors) of concentrations.
-    q : float, quantile across sensors. 0.10 keeps the estimate near the
-        cleaner end of the network without chasing a single low outlier
-        (which q=0 would do, and which a faulty low-reading sensor would win).
-    min_sensors : int, timestamps with fewer reporting sensors give NaN —
-        a quantile over three sensors is not a network estimate.
-
-    Returns
-    -------
-    Series of baseline values, NaN where the network was too thin.
-    """
-    n = hm.notna().sum(axis=1)
-    base = hm.quantile(q, axis=1)
-    return base.where(n >= min_sensors)
+    The default is MIN_SENSORS_FOR_BASELINE, not MIN_SENSORS_PER_HOUR. A low
+    quantile needs more sensors than a median does before it means anything:
+    at n = 5 the 0.10 quantile is essentially the minimum, and the minimum is
+    won by whichever sensor reads lowest, which is the fault being hunted."""
+    return hm.quantile(q, axis=1).where(hm.notna().sum(axis=1) >= min_sensors)
 
 
-def rolling_baseline(s, window="7D", q=0.05, min_frac=0.25):
-    """Temporal baseline: a low quantile of a centred rolling window.
+def loo_baseline(hm, q=BASELINE_Q, min_sensors=MIN_SENSORS_FOR_BASELINE):
+    """Leave-one-out spatial baseline: same shape as hm, column c built
+    from all sensors except c."""
+    out = {}
+    for c in hm.columns:
+        others = hm.drop(columns=c)
+        out[c] = others.quantile(q, axis=1).where(
+            others.notna().sum(axis=1) >= min_sensors)
+    return pd.DataFrame(out, index=hm.index)
 
-    Parameters
-    ----------
-    s : Series with a DatetimeIndex.
-    window : pandas offset string. 7 days is long enough to span a synoptic
-        weather episode and short enough to follow seasonal change.
-    q : float, quantile within the window.
-    min_frac : float, the window must be at least this full (as a fraction of
-        the hours it could hold) or the result is NaN. Stops a baseline being
-        drawn from two surviving readings in a gap.
 
-    Returns
-    -------
-    Series aligned to `s`.
-    """
-    if not isinstance(s.index, pd.DatetimeIndex):
-        raise TypeError("rolling_baseline needs a DatetimeIndex")
-
-    hours = pd.Timedelta(window) / pd.Timedelta("1h")
-    roll = s.rolling(window, center=True, min_periods=1)
-    base = roll.quantile(q)
-    count = roll.count()
-    return base.where(count >= max(2, min_frac * hours))
+def loo_reference(hm, min_sensors=MIN_SENSORS_PER_HOUR):
+    """Leave-one-out network median — what each sensor is regressed against
+    in offset_gain."""
+    out = {}
+    for c in hm.columns:
+        others = hm.drop(columns=c)
+        out[c] = others.median(axis=1).where(
+            others.notna().sum(axis=1) >= min_sensors)
+    return pd.DataFrame(out, index=hm.index)
 
 
 def local_increment(hm, baseline):
-    """Concentration above baseline, per sensor. Negative values are kept:
-    they are informative (a sensor reading below the regional baseline may be
-    reading low), and clipping them would bias every mean upwards."""
+    """Concentration above baseline. baseline may be a Series (one baseline
+    for the whole network) or a DataFrame of leave-one-out baselines.
+    Negative values are kept — a sensor below the network background is a
+    fault signature."""
+    if isinstance(baseline, pd.DataFrame):
+        return hm - baseline.reindex_like(hm)
     return hm.sub(baseline, axis=0)
 
 
 # --------------------------------------------------------------------------
-# Night-time conditioning and instrument diagnostics
+# Conditioning masks
 # --------------------------------------------------------------------------
-def night_mask(index, tz="Europe/London", hours=(1, 5)):
-    """Boolean mask for local-clock night hours, inclusive of both ends.
-
-    Hours are interpreted in local time because "night" is a clock concept
-    tied to human activity, and British Summer Time shifts it by an hour
-    relative to UTC for half the year.
-    """
+def night_mask(index, tz=LOCAL_TZ, hours=NIGHT_HOURS):
+    """Boolean mask for local-clock night hours (inclusive)."""
     local = index.tz_convert(tz)
     lo, hi = hours
     return (local.hour >= lo) & (local.hour <= hi)
 
 
-def well_mixed_mask(hm, baseline, max_spread=None, spread_q=0.5):
-    """Timestamps when the network is spatially uniform.
-
-    Spread is the inter-quartile range across sensors. A small spread means
-    every sensor sees much the same air, which is the condition under which a
-    persistent per-sensor difference can be attributed to the instrument
-    rather than to a genuine local source.
-
-    If `max_spread` is None it is set to the `spread_q` quantile of the
-    observed spread, i.e. the calmest half of timestamps by default.
-    """
+def well_mixed_mask(hm, baseline, max_spread=None, spread_q=0.5, relative=False):
+    """Timestamps when the network is spatially uniform (small IQR across
+    sensors). With relative=True the IQR is divided by the network median,
+    which avoids the absolute cut selecting only clean hours. With
+    max_spread=None the threshold is the spread_q quantile of observed spread.
+    Returns (mask, threshold_used)."""
     spread = hm.quantile(0.75, axis=1) - hm.quantile(0.25, axis=1)
+    if relative:
+        med = hm.median(axis=1)
+        spread = spread / med.where(med > 0.5)
     if max_spread is None:
         max_spread = spread.quantile(spread_q)
     return (spread <= max_spread) & baseline.notna(), float(max_spread)
 
 
-def instrument_offset(hm, tz="Europe/London", night_hours=(1, 5),
-                      q=0.10, min_sensors=5, spread_q=0.5, min_hours=100):
-    """Per-sensor bias relative to the network during quiet, well-mixed nights.
+# --------------------------------------------------------------------------
+# Instrument bias
+# --------------------------------------------------------------------------
+def offset_gain(hm, tz=LOCAL_TZ, night_hours=None, n_bins=10,
+                q=BASELINE_Q, min_sensors_baseline=MIN_SENSORS_FOR_BASELINE,
+                min_sensors_ref=MIN_SENSORS_PER_HOUR,
+                spread_q=0.5, relative_spread=True,
+                min_hours=200, ref_ugm3=CSI_PM_LIM, loo=True):
+    """Fit sensor = gain * reference + offset for each sensor using
+    well-mixed hours. The reference is cut into n_bins quantile bins and the
+    fit is to bin medians, making it robust to outliers.
 
-    The logic: restrict to night hours (little local emission), then to
-    timestamps when the network is spatially uniform (well mixed). Under those
-    conditions every working sensor should report close to the same value, so
-    a sensor's median departure from the network is an estimate of its own
-    bias rather than of its surroundings.
+    Returns a DataFrame with one row per sensor, sorted by bias_max.
+    Columns: offset_ugm3, gain, fit_lo/hi, bias_lo/hi, bias_max, bias_ref,
+    crossover (conc. where offset and gain cancel), n_hours, n_bins_used,
+    r2_bins.
 
-    Two forms of bias are reported because they have different causes:
-      * additive offset  (ug/m3)  — median of (sensor - network median).
-        Typical of a contaminated optical path or a drifting zero.
-      * multiplicative gain (ratio) — median of (sensor / network median),
-        computed only where the network median exceeds 1 ug/m3 so the ratio
-        is meaningful. Typical of a calibration-slope error.
-
-    Returns a DataFrame indexed by sensor with columns:
-        offset_ugm3, gain_ratio, n_hours, median_network_ugm3
+    r2_bins is the fit to the n_bins bin medians, not to the hourly data. It
+    is close to 1 for almost every sensor because bin medians of a monotone
+    relationship are nearly collinear by construction, so it says the linear
+    form is adequate and nothing about how tightly the sensor tracks the
+    network hour by hour.
     """
-    base = network_baseline(hm, q=q, min_sensors=min_sensors)
-    mixed, used_spread = well_mixed_mask(hm, base, spread_q=spread_q)
-    night = pd.Series(night_mask(hm.index, tz=tz, hours=night_hours),
-                      index=hm.index)
-    sel = night & mixed
+    base = network_baseline(hm, q=q, min_sensors=min_sensors_baseline)
+    sel, used_spread = well_mixed_mask(hm, base, spread_q=spread_q,
+                                       relative=relative_spread)
+    if night_hours is not None:
+        sel = sel & pd.Series(night_mask(hm.index, tz=tz, hours=night_hours),
+                              index=hm.index)
 
     sub = hm.loc[sel]
-    net = hm.loc[sel].median(axis=1)
+    ref = (loo_reference(sub, min_sensors=min_sensors_ref) if loo else
+           pd.DataFrame({c: sub.median(axis=1) for c in sub.columns},
+                        index=sub.index))
 
-    diff = sub.sub(net, axis=0)
-    denom = net.where(net > 1.0)
-    ratio = sub.div(denom, axis=0)
+    rows = {}
+    for name in sub.columns:
+        pair = pd.DataFrame({"net": ref[name], "sen": sub[name]}).dropna()
+        if len(pair) < min_hours:
+            continue
+        bins = pd.qcut(pair["net"], n_bins, duplicates="drop")
+        g = pair.groupby(bins, observed=True).median().dropna()
+        if len(g) < 3:
+            continue
 
-    out = pd.DataFrame({
-        "offset_ugm3": diff.median(),
-        "gain_ratio": ratio.median(),
-        "n_hours": sub.notna().sum(),
-        "median_network_ugm3": float(net.median()),
-    })
-    out.attrs["max_spread_used"] = used_spread
-    out.attrs["n_timestamps"] = int(sel.sum())
-    return out.loc[out["n_hours"] >= min_hours].sort_values("offset_ugm3")
+        x, y = g["net"].to_numpy(), g["sen"].to_numpy()
+        gain, offset = np.polyfit(x, y, 1)
+        ss_res = float(((y - (gain * x + offset)) ** 2).sum())
+        ss_tot = float(((y - y.mean()) ** 2).sum())
+        lo, hi = float(x.min()), float(x.max())
+        b_lo, b_hi = offset + (gain - 1) * lo, offset + (gain - 1) * hi
+        rows[name] = {
+            "offset_ugm3": offset,
+            "gain":        gain,
+            "fit_lo":      lo,
+            "fit_hi":      hi,
+            "bias_lo":     b_lo,
+            "bias_hi":     b_hi,
+            "bias_max":    max(abs(b_lo), abs(b_hi)),
+            "bias_ref":    offset + (gain - 1) * ref_ugm3,
+            "crossover":   -offset / (gain - 1) if abs(gain - 1) > 0.02 else np.nan,
+            "n_hours":     int(len(pair)),
+            "n_bins_used": int(len(g)),
+            "r2_bins":     1 - ss_res / ss_tot if ss_tot > 0 else np.nan,
+        }
+
+    out = pd.DataFrame(rows).T
+    out.attrs.update(max_spread_used=used_spread, n_timestamps=int(sel.sum()),
+                     relative_spread=relative_spread, ref_ugm3=ref_ugm3)
+    return out.sort_values("bias_max", ascending=False)
 
 
-# --------------------------------------------------------------------------
-# Diurnal profiles
-# --------------------------------------------------------------------------
-def diurnal_profile(s, tz="Europe/London", by_daytype=True, stat="median"):
-    """Average value by local hour of day.
+def harmonise(x, offset, gain):
+    """Invert the fitted sensor = gain * network + offset relation.
 
-    With `by_daytype`, returns a DataFrame with 'weekday' and 'weekend'
-    columns. The weekday/weekend contrast is the standard way to separate a
-    traffic-driven signal (strong weekday morning peak) from sources that do
-    not follow the working week (domestic heating, regional transport).
+    Byrne et al. (2024, Sect. 2.1.1) scale every sensor onto a common
+    reference by linear regression before computing the CSI, and describe it
+    as a prerequisite. That harmonisation used co-location data, which Leeds
+    does not have; the offset and gain fitted over well-mixed hours are the
+    field equivalent. Because the map is linear, applying it to daily means
+    gives the same answer as applying it to every reading and then averaging.
     """
+    return (x - offset) / gain
+
+
+# --------------------------------------------------------------------------
+# Diurnal profiles and site classification
+# --------------------------------------------------------------------------
+def diurnal_profile(s, tz=LOCAL_TZ, by_daytype=True, stat="median"):
+    """Hourly average by local clock time. With by_daytype returns separate
+    weekday and weekend columns."""
     local = s.copy()
     local.index = local.index.tz_convert(tz)
-    hour = local.index.hour
 
     if not by_daytype:
-        return local.groupby(hour).agg(stat)
+        return local.groupby(local.index.hour).agg(stat)
 
     weekend = local.index.dayofweek >= 5
-    out = pd.DataFrame({
+    return pd.DataFrame({
         "weekday": local[~weekend].groupby(local.index[~weekend].hour).agg(stat),
         "weekend": local[weekend].groupby(local.index[weekend].hour).agg(stat),
-    })
-    return out.reindex(range(24))
+    }).reindex(range(24))
 
 
-# --------------------------------------------------------------------------
-# Site classification
-# --------------------------------------------------------------------------
 LEEDS_CENTRE = (53.7997, -1.5492)   # City Square
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
     p1, p2 = np.radians(lat1), np.radians(lat2)
-    dphi = p2 - p1
-    dlmb = np.radians(np.asarray(lon2) - np.asarray(lon1))
+    dphi   = p2 - p1
+    dlmb   = np.radians(np.asarray(lon2) - np.asarray(lon1))
     a = np.sin(dphi / 2) ** 2 + np.cos(p1) * np.cos(p2) * np.sin(dlmb / 2) ** 2
     return 2 * 6371.0 * np.arcsin(np.sqrt(a))
 
 
-def classify_sites(coords, centre=LEEDS_CENTRE,
-                   edges=(3, 8, 15),
+def classify_sites(coords, centre=LEEDS_CENTRE, edges=(3, 8, 15),
                    labels=("city centre", "inner urban", "suburban", "rural")):
-    """Crude urban-rural classification by distance from the city centre.
-
-    This is a geometric proxy, not a land-use survey: a sensor 10 km out on a
-    main road is not really suburban in character. It is used only to group
-    sites for comparison, and the group boundaries are reported so the
-    grouping can be varied.
-
-    Returns a DataFrame with km_from_centre and site_type.
-    """
+    """Add km_from_centre and site_type columns to a coords DataFrame.
+    This is distance-based, not a land-use classification."""
     d = haversine_km(centre[0], centre[1],
                      coords["lat"].to_numpy(), coords["lon"].to_numpy())
     out = coords.copy()
@@ -248,75 +216,9 @@ def classify_sites(coords, centre=LEEDS_CENTRE,
     return out
 
 
-def offset_gain(hm, tz="Europe/London", night_hours=None, n_bins=10,
-                q=0.10, min_sensors=5, spread_q=0.5, min_hours=100):
-    """Separate additive offset from multiplicative gain by regression.
-
-    `instrument_offset` reports both a median difference and a median ratio,
-    but at low concentrations the two are entangled: a sensor reading a
-    constant 5 ug/m3 too high also shows a large ratio when the air is clean.
-    Regressing a sensor's value on the network median across the concentration
-    range separates them properly:
-
-        sensor = gain * network + offset
-
-    an intercept away from 0 is an additive bias, a slope away from 1 is a
-    calibration-slope error, and a sensor can have both.
-
-    The fit is made robust without extra dependencies by binning the network
-    median into `n_bins` quantile bins, taking the median sensor value in each
-    bin, and least-squares fitting a line to those bin medians. Individual
-    outlying hours therefore cannot drag the fit.
-
-    By default all well-mixed hours are used, not just night: spatial
-    uniformity already implies no local source is active, and using the full
-    day spans a wider concentration range, which the slope estimate needs.
-    Pass `night_hours=(1, 5)` to restrict to quiet nights as well.
-
-    Returns a DataFrame indexed by sensor with offset_ugm3, gain, n_hours,
-    n_bins_used and r2 (fit quality on the bin medians).
-    """
-    base = network_baseline(hm, q=q, min_sensors=min_sensors)
-    mixed, used_spread = well_mixed_mask(hm, base, spread_q=spread_q)
-    sel = mixed
-    if night_hours is not None:
-        sel = sel & pd.Series(night_mask(hm.index, tz=tz, hours=night_hours),
-                              index=hm.index)
-
-    sub = hm.loc[sel]
-    net = sub.median(axis=1)
-    ok = net.notna()
-    sub, net = sub.loc[ok], net.loc[ok]
-    if len(net) < 2:
-        return pd.DataFrame(columns=["offset_ugm3", "gain", "n_hours",
-                                     "n_bins_used", "r2"])
-
-    bins = pd.qcut(net, n_bins, duplicates="drop")
-
-    rows = {}
-    for name in sub.columns:
-        s = sub[name]
-        pair = pd.DataFrame({"net": net, "sen": s, "bin": bins}).dropna()
-        if len(pair) < min_hours:
-            continue
-        g = pair.groupby("bin", observed=True).median(numeric_only=True)
-        g = g.dropna()
-        if len(g) < 3:
-            continue
-        x, y = g["net"].to_numpy(), g["sen"].to_numpy()
-        gain, offset = np.polyfit(x, y, 1)
-        pred = gain * x + offset
-        ss_res = float(((y - pred) ** 2).sum())
-        ss_tot = float(((y - y.mean()) ** 2).sum())
-        rows[name] = {
-            "offset_ugm3": offset,
-            "gain": gain,
-            "n_hours": int(len(pair)),
-            "n_bins_used": int(len(g)),
-            "r2": 1 - ss_res / ss_tot if ss_tot > 0 else np.nan,
-        }
-
-    out = pd.DataFrame(rows).T
-    out.attrs["max_spread_used"] = used_spread
-    out.attrs["n_timestamps"] = int(sel.sum())
-    return out.sort_values("offset_ugm3", ascending=False)
+def nearest_neighbours(coords, target, k=N_NEIGHBOURS):
+    """The k closest sensors to `target`, as a Series of distances in km."""
+    others = coords.drop(index=target)
+    d = haversine_km(coords.loc[target, "lat"], coords.loc[target, "lon"],
+                     others["lat"].to_numpy(), others["lon"].to_numpy())
+    return pd.Series(d, index=others.index).sort_values().head(k)

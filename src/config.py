@@ -1,8 +1,8 @@
 """
 Central configuration for the Sensing Leeds Air Quality project.
 
-Every path, column name, and cleaning threshold is defined ONCE, here.
-Notebooks and scripts import from this module so nothing drifts out of sync.
+Every path, column name, and threshold is defined ONCE, here. Notebooks and
+scripts import from this module so nothing drifts out of sync.
 
 Usage from a notebook in notebooks/:
     import sys; sys.path.append(str(Path.cwd().parent))
@@ -23,15 +23,26 @@ DATA_DIR = Path(
 # so the code works regardless of where the repo is cloned.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-PROCESSED   = PROJECT_ROOT / "data" / "processed"   # combined per-sensor Parquet
+PROCESSED   = PROJECT_ROOT / "data" / "processed"    # combined per-sensor Parquet
 CLEANED     = PROCESSED / "cleaned"                  # flagged per-sensor Parquet
+DERIVED     = PROCESSED / "derived"                  # network-level matrices
 OUT_TABLES  = PROJECT_ROOT / "outputs" / "tables"
-OUT_FIGURES = PROJECT_ROOT / "outputs" / "figures"
+OUT_FIGS    = PROJECT_ROOT / "outputs" / "figures"
 MANIFEST    = PROCESSED / "_ingest_manifest.parquet"
 
-# Make sure the output locations exist on import.
-for _d in (PROCESSED, CLEANED, OUT_TABLES, OUT_FIGURES):
+# Older notebooks import these names; kept as aliases so nothing breaks.
+Tables  = OUT_TABLES
+Figures = OUT_FIGS
+
+for _d in (PROCESSED, CLEANED, DERIVED, OUT_TABLES, OUT_FIGS):
     _d.mkdir(parents=True, exist_ok=True)
+
+# Network-level products. These live in DERIVED, not PROCESSED, so that the
+# per-sensor globs in later notebooks cannot accidentally pick them up.
+DAILY_MATRIX  = DERIVED / "daily_matrix.parquet"
+HOURLY_MATRIX = DERIVED / "network_hourly_sensors.parquet"
+HOURLY_STATS  = DERIVED / "hourly_stats"             # one Parquet per sensor (NB08)
+HOURLY_STATS.mkdir(parents=True, exist_ok=True)
 
 # --------------------------------------------------------------------------
 # Column names (exactly as they appear in the raw CSVs)
@@ -43,32 +54,79 @@ TEMP_COL = "Temperature (F)"
 RH_COL   = "Humidity (%)"
 
 # --------------------------------------------------------------------------
-# Cleaning thresholds (all from Byrne et al. 2023)
+# Cleaning thresholds
 # --------------------------------------------------------------------------
-MAX_PLAUSIBLE = 1000     # operational range cap (ug/m3)
+# Byrne et al. (2024, Sect. 2.1.2) quote the PMS5003 as having an EFFECTIVE
+# range of 0-500 ug/m3 and a MAXIMUM range of 1000. Readings above the maximum
+# cannot be a measurement at all, so that is the implausibility cut. Readings
+# between the two are retained but sit outside the range the manufacturer
+# claims accuracy for, and notebook 03 reports how many there are.
+EFFECTIVE_MAX = 500
+MAX_PLAUSIBLE = 1000
+
 PM_BREAK      = 15       # high/low concentration breakpoint (ug/m3)
 REL_HIGH      = 0.05     # above 15: flag if relative A/B diff > 5%
 REL_LOW       = 0.50     # at/below 15: flag if relative A/B diff > 50%
 
+# Absolute floor on the A/B difference. Byrne et al. (2023) apply the relative
+# test alone, which is fine for Cork where wintertime PM2.5 is high. Leeds air
+# is much cleaner, so a 50% relative difference is routinely produced by
+# counting noise between two healthy channels. Barkjohn et al. (2021), whose
+# criterion underpins the US EPA AirNow correction, pair the relative test with
+# an absolute floor for exactly this reason.
+# Set to 0.0 to reproduce Byrne exactly; notebook 04 sweeps this value.
+AB_ABS_MIN     = 1.0
+AB_FLOOR_SWEEP = (0.0, 0.5, 1.0, 2.0, 5.0)
+
+# Flatline (frozen-reading) detector. A run of identical values on BOTH
+# channels is invisible to the A/B test, because the channels agree perfectly.
+# 90 readings at 2-min spacing = 3 hours.
+FLATLINE_RUN = 90
+# A PMS5003 in genuinely clean air reports 0.0 legitimately, so a run of exact
+# zeros is not evidence of frozen electronics. Flagging it would also remove
+# the cleanest readings in the network, which are the ones that set the
+# spatial baseline in notebook 07. Runs at zero are therefore counted and
+# reported separately rather than flagged. Notebook 04 shows both counts.
+FLATLINE_IGNORE_ZERO = True
+
 # --------------------------------------------------------------------------
-# Daily aggregation
+# Humidity correction
+# --------------------------------------------------------------------------
+# Barkjohn et al. (2021) fitted their US-wide correction to PA cf_1, while the
+# Leeds archive exports cf_atm. Barkjohn et al. report that the two columns
+# stand in a 1:1 relationship below roughly 25 ug/m3 as reported by the sensor,
+# diverging to a two-thirds ratio above it. Leeds daily means sit at a few
+# ug/m3, so the columns are interchangeable across almost the whole dataset;
+# the exception is event hours, where cf_atm reads low and the corrected value
+# is therefore conservative. Notebook 05 reports how much data sits above it.
+CF_EQUIV_LIMIT = 25
+
+# --------------------------------------------------------------------------
+# Aggregation
 # --------------------------------------------------------------------------
 # Minimum clean readings for a valid daily mean. Chosen from the survival
-# sensitivity check: 180 (~6 h of 2-min data) retains 90.6% of sensor-days
-# and 43/44 sensors; the survival cliff sits between 240 and 360.
+# sensitivity check in notebook 04: 180 (~6 h of 2-min data) retains 90.6% of
+# sensor-days and 43/44 sensors; the survival cliff sits between 240 and 360.
 MIN_READINGS_PER_DAY = 180
 
 # Minimum clean readings for a valid HOURLY mean (~30 expected at 2-min
-# spacing, so this is a 50% completeness rule). Justified by the subsampling
-# test in notebook 04: a contiguous block of 15 readings estimates the true
-# hourly mean to ~4% (90th percentile ~16%), and relaxing the threshold to 5
-# raises network coverage only to ~52%, so hourly resolution fails even in
-# its most permissive form. Used by notebooks 06, 07 and 08.
-MIN_READ_PER_HOUR    = 15
+# spacing, so a 50% completeness rule). Justified by the subsampling test in
+# notebook 04. Used by notebooks 06, 07 and 08.
+MIN_READ_PER_HOUR = 15
 
-# Minimum sensors reporting in an hour for a network-level statistic
-# (median or baseline) to be formed from them.
+# Minimum sensors reporting before a network MEDIAN is formed. A median is
+# stable at small n, so this is the looser of the two bars.
 MIN_SENSORS_PER_HOUR = 5
+
+# Minimum sensors reporting before the 10th-percentile BASELINE is formed.
+# This is deliberately stricter than MIN_SENSORS_PER_HOUR. With n reporting
+# sensors, linear interpolation places the 0.10 quantile at index 0.1*(n-1),
+# so at n = 5 the "10th percentile" carries 60% weight on the single lowest
+# sensor -- i.e. it is the minimum, which is the statistic the baseline was
+# chosen to avoid, and which is won by whichever sensor reads systematically
+# low. At n >= 12 the quantile is set by the second and third lowest sensors
+# and the intended behaviour is recovered.
+MIN_SENSORS_FOR_BASELINE = 12
 
 LOCAL_TZ = "Europe/London"    # clock time for diurnal and event analysis
 
@@ -78,34 +136,117 @@ LOCAL_TZ = "Europe/London"    # clock time for diurnal and event analysis
 # The paper's final calibrated parameters (their Sect. 2.2.3):
 #   relative difference uses the GEOMETRIC MEAN of the pair as denominator;
 #   above PMlim the pair must agree within 20%, at/below within 70%.
-CSI_PM_LIM   = 15        # PM concentration breakpoint (ug/m3)
-CSI_C_UPPER  = 0.2       # strict similarity limit above PMlim
-CSI_C_LOWER  = 0.7       # lenient similarity limit at/below PMlim
-MIN_COMMON_DAYS = 30     # min overlapping days for a pair's CSI to be reported
-MIN_VALID_DAYS      = 100 # minimum valid days for a sensor to be included in the pairwise analysis
+CSI_PM_LIM      = 15         # PM concentration breakpoint (ug/m3)
+CSI_C_UPPER     = 0.2        # strict similarity limit above PMlim
+CSI_C_LOWER     = 0.7        # lenient similarity limit at/below PMlim
+MIN_COMMON_DAYS = 30         # min overlapping days for a pair's CSI
+MIN_VALID_DAYS  = 100        # min valid days for a sensor to enter the analysis
+
+# Recent-window CSI (notebook 05). A full year avoids comparing a summer
+# window against a lifetime that is half winter.
+RECENT_WINDOW_DAYS = 365
+RECENT_MIN_DAYS    = 60      # valid days a sensor needs inside the window
 
 # --------------------------------------------------------------------------
-# Baseline separation (notebook 07; Lenschow et al. 2001 decomposition)
+# Baseline separation (notebook 07)
 # --------------------------------------------------------------------------
-# Quantile ACROSS sensors defining the regional baseline at each hour. The
-# minimum (q=0) would be set by a single sensor and would be won every hour by
-# any sensor reading systematically low, which is the fault being tested for.
-BASELINE_Q      = 0.10
-# Window for the single-site temporal baseline: long enough to span a synoptic
-# episode, short enough to follow seasonal change.
-BASELINE_WINDOW = "7D"
-# Local-clock hours treated as quiet for the instrument-bias diagnostic.
-# Night is a conditioning period, not a definition of clean air: the nocturnal
-# boundary layer is shallow, so emissions accumulate rather than disperse.
-NIGHT_HOURS     = (1, 5)
+BASELINE_Q       = 0.10      # quantile ACROSS sensors defining the baseline
+BASELINE_Q_SWEEP = (0.05, 0.10, 0.25)
+NIGHT_HOURS      = (1, 5)    # local-clock hours treated as quiet
 
 # --------------------------------------------------------------------------
 # Event analysis (notebook 06)
 # --------------------------------------------------------------------------
 BONFIRE_YEARS = [2022, 2023, 2024, 2025]
-# Excluded from the CONTROL baseline only (neighbouring organised displays);
-# raw time-series plots are unaffected.
-EVENT_EXCLUDE = ["11-03", "11-04", "11-05", "11-06", "11-07"]
+# One event window, used by notebooks 06, 07 and 08 alike: 17:00 on 5 November
+# to 01:00 on the 6th, local clock.
+EVENT_START_HOUR = 17
+EVENT_N_HOURS    = 8
+# Control evenings come from the same weeks in the same years: 25 October to
+# 15 November, excluding 2-7 November so the neighbouring organised displays
+# do not contaminate the baseline.
+CONTROL_START = "10-25"
+CONTROL_END   = "11-15"
+EVENT_EXCLUDE = ["11-02", "11-03", "11-04", "11-05", "11-06", "11-07"]
+
+# --------------------------------------------------------------------------
+# Local-source discrimination (notebook 08)
+# --------------------------------------------------------------------------
+# Byrne et al. (2023) mark an hour as locally influenced when the standard
+# deviation of the two-minute readings about their own hourly mean exceeds a
+# threshold. They chose 2 ug/m3 by visual inspection, having also tried 1 and
+# 3; the sweep below repeats that comparison on the Leeds data.
+SIGMA_DPM_THRESH = 2.0
+SIGMA_DPM_SWEEP  = (1.0, 2.0, 3.0)
+# Longest gap, in hours, the episode background may be interpolated across.
+# Beyond this the sensor has been off air and an interpolated background is a
+# guess rather than a measurement.
+SIGMA_DPM_MAX_GAP = 6
+
+# Domestic solid fuel is a heating-season source, so the two halves of the year
+# are compared directly. Shoulder months are left out of both, so the contrast
+# is between clearly heating and clearly non-heating periods.
+WINTER_MONTHS = (11, 12, 1, 2)
+SUMMER_MONTHS = (5, 6, 7, 8)
+
+# Spatial coherence test (van Zoest et al. 2018): a real event shows up at more
+# than one site, an instrument fault does not.
+N_NEIGHBOURS = 5             # nearest sensors used as the comparison group
+EXCURSION_Q  = 0.90          # a sensor's excursion days are its own top decile
+
+# Which sensors get a verdict in notebook 08.
+CSI_FLAG_LEVEL = 0.55        # lifetime mean CSI at or below this is flagged
+CSI_FLAG_N     = 6           # plus the N worst, whatever their score
+# A sensor can fail the A/B test heavily and still score well on the CSI,
+# because the cleaning removes the disagreeing rows and the survivors agree
+# with the network. SL037 is the example. Such a sensor has to enter the
+# candidate set by its own route or it is never diagnosed.
+#
+# 50% is deliberately loose here, and is an ENTRY bar only. NB04's own
+# Figure 1 shows the network-wide high-band rate running from about 30% to
+# 98% with a mean of 68%: at Leeds concentrations even a healthy PA-II fails
+# Byrne's +/-5% test on Poisson noise alone, so a 50% cut catches most of the
+# network. That is fine for casting a wide net at entry, but it must not also
+# be the bar a VERDICT is decided on, or "candidate" becomes a synonym for
+# "member of the network".
+AB_FLAG_LEVEL  = 50.0        # % of high-band readings A/B-flagged (candidate entry only)
+# The verdict-stage bar is set separately, at the point where NB04's ranking
+# visibly separates from the rest of the pack (the top 7 of 43 sensors sit at
+# 89% or above; the next sensor down is at 85.5%, and the range below that is
+# a smooth decline with no further gap). SL001 sits in this top group and is
+# independently corroborated in NB03: 173,000 channel-A readings pinned near
+# 3330 ug/m3 while channel B stays in range, on the same sensor.
+AB_VERDICT_LEVEL = 90.0      # % of high-band readings A/B-flagged, single-channel VERDICT
+# ... but only once there are enough high-band readings for the rate to mean
+# anything. A clean, short-lived sensor can post 100% on a dozen readings.
+AB_MIN_HIGHBAND = 500
+
+# Verdict thresholds, each in the units of the quantity it tests.
+VERDICT_BIAS_MIN = 1.0       # |bias| at 15 ug/m3, above which calibration matters
+VERDICT_CSI_GAIN = 0.10      # CSI recovery after harmonisation counted as real
+VERDICT_WS_RATIO = 1.5       # winter:summer local-influence ratio of a source
+VERDICT_FLATLINE = 5.0       # % of readings frozen
+# A candidate counts as "fluctuating" if EITHER its sigma_DPM hour-fraction OR
+# its p90 daily increment above the leave-one-out baseline exceeds the
+# reference group (see NB08 section 5). The two are not interchangeable:
+# sigma_DPM catches short, spiky excursions, while the increment catches a
+# site that sits persistently above the regional background without
+# necessarily spiking minute to minute within the hour. SL051 is the case
+# that makes this matter -- Bramham has the largest p90 daily increment in the
+# network by a wide margin but a below-median sigma_DPM hour-fraction, because
+# its evening enhancement looks like a sustained village-wide level rather
+# than a single chimney plume passing the sensor. Gating on sigma_DPM alone
+# sends it straight to "unresolved" despite near-zero neighbour sharing, a
+# winter:summer ratio well above 1.5, strong autocorrelation and near-perfect
+# channel agreement -- every other test in the notebook pointing at a local
+# source.
+# Lag-1 autocorrelation of the two-minute readings inside a flagged hour. A
+# plume arriving and clearing over minutes is strongly autocorrelated;
+# electronic noise is independent from reading to reading whatever its size.
+VERDICT_LAG1     = 0.30
+# Correlation between the two channels during flagged hours. Real particles
+# reach both counters at once; a failing detector moves one and not the other.
+VERDICT_AB_CORR  = 0.50
 
 # --------------------------------------------------------------------------
 # Study-area definition (used by the sensor filter)
