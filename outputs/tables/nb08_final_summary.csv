@@ -1,44 +1,48 @@
-,current_status,coverage_pct,csi,bias_ref,vanzoest_daily_pct,interpretation
-SL007,currently reporting,82.4,0.8,-1.01,4.3,no strong evidence of abnormal behaviour
-SL016,currently reporting,70.3,0.75,-1.28,1.9,no strong evidence of abnormal behaviour
-SL020,currently reporting,55.6,0.79,0.17,4.3,no strong evidence of abnormal behaviour
-SL024,currently reporting,86.3,0.73,-0.52,4.0,no strong evidence of abnormal behaviour
-SL025,currently reporting,78.1,0.79,-0.87,1.5,no strong evidence of abnormal behaviour
-SL062,currently reporting,49.1,0.71,-1.1,0.5,no strong evidence of abnormal behaviour
-SL006,currently reporting,45.7,0.46,0.55,2.3,possible abnormal behaviour -- worth a second look
-SL056,currently reporting,48.0,0.7,1.35,5.4,possible abnormal behaviour -- worth a second look
-SL027,currently reporting,81.6,0.76,1.09,10.1,"possible local event -- report to Council, not a fault"
-SL051,currently reporting,20.6,0.32,-2.12,4.4,"possible local event -- report to Council, not a fault"
-SL011,currently reporting,68.4,0.77,-0.36,0.6,requires investigation -- consistent evidence of a problem
-SL021,currently reporting,46.4,0.74,1.43,3.0,requires investigation -- consistent evidence of a problem
-SL026,currently reporting,70.5,0.78,-1.07,1.6,requires investigation -- consistent evidence of a problem
-SL034,currently reporting,42.3,0.78,0.4,2.2,requires investigation -- consistent evidence of a problem
-SL037,currently reporting,16.8,0.85,-0.09,0.9,requires investigation -- consistent evidence of a problem
-SL042,currently reporting,49.8,0.75,0.66,7.1,requires investigation -- consistent evidence of a problem
-SL050,currently reporting,62.1,0.32,-2.71,5.8,requires investigation -- consistent evidence of a problem
-SL033,offline / not reporting,37.6,0.72,0.28,2.8,no strong evidence of abnormal behaviour
-SL036,offline / not reporting,8.7,0.84,-0.73,0.4,no strong evidence of abnormal behaviour
-SL038,offline / not reporting,27.8,0.76,0.02,2.8,no strong evidence of abnormal behaviour
-SL054,offline / not reporting,7.2,0.78,-0.01,0.7,no strong evidence of abnormal behaviour
-SL001,offline / not reporting,56.0,0.76,-0.65,2.4,offline / not reporting -- requires operational attention
-SL003,offline / not reporting,48.2,0.59,0.76,5.6,offline / not reporting -- requires operational attention
-SL005,offline / not reporting,45.7,0.79,-1.07,2.0,offline / not reporting -- requires operational attention
-SL008,offline / not reporting,59.0,0.68,-0.66,0.9,offline / not reporting -- requires operational attention
-SL009,offline / not reporting,14.5,0.84,-1.13,0.5,offline / not reporting -- requires operational attention
-SL012,offline / not reporting,80.1,0.78,1.19,10.1,offline / not reporting -- requires operational attention
-SL015,offline / not reporting,35.5,0.69,1.71,6.3,offline / not reporting -- requires operational attention
-SL018,offline / not reporting,44.2,0.54,1.68,1.1,offline / not reporting -- requires operational attention
-SL019,offline / not reporting,65.5,0.66,1.78,16.5,offline / not reporting -- requires operational attention
-SL022,offline / not reporting,55.6,0.58,-0.92,5.6,offline / not reporting -- requires operational attention
-SL023,offline / not reporting,26.8,0.76,-1.23,0.3,offline / not reporting -- requires operational attention
-SL028,offline / not reporting,8.0,0.58,-0.81,0.4,offline / not reporting -- requires operational attention
-SL029,offline / not reporting,16.5,0.76,-1.14,1.1,offline / not reporting -- requires operational attention
-SL032,offline / not reporting,18.1,0.81,0.9,0.8,offline / not reporting -- requires operational attention
-SL035,offline / not reporting,50.9,0.72,0.68,9.7,offline / not reporting -- requires operational attention
-SL040,offline / not reporting,55.1,0.78,-0.2,3.0,offline / not reporting -- requires operational attention
-SL041,offline / not reporting,26.9,0.73,-0.48,2.4,offline / not reporting -- requires operational attention
-SL044,offline / not reporting,58.5,0.72,-1.12,1.3,offline / not reporting -- requires operational attention
-SL045,offline / not reporting,25.1,0.72,-2.06,0.4,offline / not reporting -- requires operational attention
-SL055,offline / not reporting,34.7,0.78,0.16,1.6,offline / not reporting -- requires operational attention
-SL068,offline / not reporting,23.5,0.85,-1.08,0.9,offline / not reporting -- requires operational attention
-SL017,offline / not reporting,50.1,0.76,0.07,3.8,offline / not reporting -- requires operational attention
+,current_status,coverage_pct,csi,bias_ref,historical_finding,operational_action
+SL016,currently reporting,69.7,0.75,-1.42,unresolved,no strong evidence of abnormal behaviour
+SL024,currently reporting,86.4,0.73,-0.51,no strong evidence of abnormal behaviour,no strong evidence of abnormal behaviour
+SL025,currently reporting,78.3,0.79,-0.85,"reference sensor (healthy standard, not diagnosed itself)",no strong evidence of abnormal behaviour
+SL062,currently reporting,49.4,0.71,-1.1,unresolved,no strong evidence of abnormal behaviour
+SL027,currently reporting,81.5,0.76,1.1,possible local source,"possible local event -- report to Council, not a fault"
+SL051,currently reporting,21.2,0.32,-2.16,possible local source,"possible local event -- report to Council, not a fault"
+SL026,currently reporting,70.7,0.78,-0.87,single-channel fault,requires investigation
+SL034,currently reporting,41.9,0.78,0.45,single-channel fault,requires investigation
+SL037,currently reporting,16.6,0.85,-0.1,single-channel fault,requires investigation
+SL042,currently reporting,49.4,0.75,0.63,single-channel fault,requires investigation
+SL050,currently reporting,62.4,0.32,-2.63,calibration fault,requires investigation
+SL020,currently reporting,55.1,0.79,0.19,worth a second look,worth a second look
+SL056,currently reporting,48.4,0.7,1.35,worth a second look,worth a second look
+SL018,offline / not reporting,43.8,0.54,1.68,calibration fault,offline -- requires attention (history: calibration fault)
+SL030,offline / not reporting,,,-0.7,insufficient historical data for a CSI-based assessment,offline -- requires attention (history: insufficient historical data for a CSI-based assessment)
+SL031,offline / not reporting,,,-1.39,insufficient historical data for a CSI-based assessment,offline -- requires attention (history: insufficient historical data for a CSI-based assessment)
+SL057,offline / not reporting,,,,insufficient historical data for a CSI-based assessment,offline -- requires attention (history: insufficient historical data for a CSI-based assessment)
+SL060,offline / not reporting,,,0.26,insufficient historical data for a CSI-based assessment,offline -- requires attention (history: insufficient historical data for a CSI-based assessment)
+SL033,offline / not reporting,37.3,0.72,0.28,no strong evidence of abnormal behaviour,offline -- requires attention (history: no strong evidence of abnormal behaviour)
+SL036,offline / not reporting,8.6,0.84,-0.74,no strong evidence of abnormal behaviour,offline -- requires attention (history: no strong evidence of abnormal behaviour)
+SL038,offline / not reporting,27.6,0.76,-0.01,no strong evidence of abnormal behaviour,offline -- requires attention (history: no strong evidence of abnormal behaviour)
+SL054,offline / not reporting,7.2,0.78,0.01,no strong evidence of abnormal behaviour,offline -- requires attention (history: no strong evidence of abnormal behaviour)
+SL003,offline / not reporting,47.8,0.59,0.71,possible local source,offline -- requires attention (history: possible local source)
+SL012,offline / not reporting,79.5,0.78,1.15,possible local source,offline -- requires attention (history: possible local source)
+SL015,offline / not reporting,35.2,0.69,1.66,possible local source,offline -- requires attention (history: possible local source)
+SL007,offline / not reporting,81.8,0.8,-0.98,"reference sensor (healthy standard, not diagnosed itself)","offline -- requires attention (history: reference sensor (healthy standard, not diagnosed itself))"
+SL017,offline / not reporting,49.7,0.76,0.08,"reference sensor (healthy standard, not diagnosed itself)","offline -- requires attention (history: reference sensor (healthy standard, not diagnosed itself))"
+SL055,offline / not reporting,34.4,0.78,0.16,"reference sensor (healthy standard, not diagnosed itself)","offline -- requires attention (history: reference sensor (healthy standard, not diagnosed itself))"
+SL001,offline / not reporting,55.6,0.76,-0.55,single-channel fault,offline -- requires attention (history: single-channel fault)
+SL008,offline / not reporting,58.5,0.68,-0.67,single-channel fault,offline -- requires attention (history: single-channel fault)
+SL011,offline / not reporting,67.9,0.77,-0.34,single-channel fault,offline -- requires attention (history: single-channel fault)
+SL019,offline / not reporting,64.9,0.66,1.83,single-channel fault,offline -- requires attention (history: single-channel fault)
+SL021,offline / not reporting,46.0,0.74,1.42,single-channel fault,offline -- requires attention (history: single-channel fault)
+SL035,offline / not reporting,50.5,0.72,0.68,single-channel fault,offline -- requires attention (history: single-channel fault)
+SL044,offline / not reporting,58.1,0.72,-1.14,single-channel fault,offline -- requires attention (history: single-channel fault)
+SL005,offline / not reporting,45.4,0.79,-1.07,unresolved,offline -- requires attention (history: unresolved)
+SL009,offline / not reporting,14.4,0.84,-1.15,unresolved,offline -- requires attention (history: unresolved)
+SL022,offline / not reporting,55.2,0.58,-0.92,unresolved,offline -- requires attention (history: unresolved)
+SL023,offline / not reporting,26.6,0.76,-1.02,unresolved,offline -- requires attention (history: unresolved)
+SL028,offline / not reporting,8.0,0.58,-0.82,unresolved,offline -- requires attention (history: unresolved)
+SL032,offline / not reporting,17.9,0.81,0.9,unresolved,offline -- requires attention (history: unresolved)
+SL040,offline / not reporting,54.6,0.78,-0.21,unresolved,offline -- requires attention (history: unresolved)
+SL045,offline / not reporting,24.9,0.72,-2.07,unresolved,offline -- requires attention (history: unresolved)
+SL068,offline / not reporting,23.3,0.85,-1.06,unresolved,offline -- requires attention (history: unresolved)
+SL006,offline / not reporting,45.4,0.46,0.52,worth a second look,offline -- requires attention (history: worth a second look)
+SL029,offline / not reporting,16.4,0.76,-1.14,worth a second look,offline -- requires attention (history: worth a second look)
+SL041,offline / not reporting,26.6,0.73,-0.46,worth a second look,offline -- requires attention (history: worth a second look)

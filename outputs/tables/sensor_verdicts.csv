@@ -1,36 +1,35 @@
 ,mean_csi,csi_recovery,bias_ref,pct_flatline,pct_ab_high,n_highband,time_local_pct,p90_increment,winter_summer,lag1,ab_corr,nbr_shared,verdict,action
-SL050,0.32,0.317,-2.71,0.0,60.1,163650,13.5,1.03,2.6,0.887,0.479,0.39,calibration fault,site visit - clean or recalibrate
+SL050,0.32,0.317,-2.63,0.0,60.0,164535,13.4,1.03,2.65,0.887,0.479,0.39,calibration fault,site visit - clean or recalibrate
 SL018,0.536,0.187,1.68,0.0,97.9,201755,7.9,1.41,1.5,0.813,0.939,0.54,calibration fault,site visit - clean or recalibrate
-SL056,0.699,0.079,1.35,0.0,72.5,140331,20.3,3.95,1.1,0.551,0.995,0.83,intermittent fault,site visit - inspect
-SL041,0.726,0.026,-0.48,0.0,57.6,75919,17.7,3.44,1.16,0.852,0.991,0.79,intermittent fault,site visit - inspect
-SL032,0.806,0.008,0.9,0.0,78.5,48483,17.4,2.82,0.89,0.475,0.987,0.35,intermittent fault,site visit - inspect
-SL051,0.316,0.016,-2.12,0.0,37.2,63903,8.2,22.02,2.76,0.953,0.998,0.01,local source,no visit - report the site to the Council
-SL003,0.587,-0.046,0.76,0.0,66.3,169460,36.2,5.16,1.72,0.444,0.996,0.7,local source,no visit - report the site to the Council
-SL015,0.694,0.055,1.71,0.0,48.7,110061,31.5,5.41,1.83,0.76,0.996,0.47,local source,no visit - report the site to the Council
-SL017,0.755,0.02,0.07,0.0,59.1,106562,18.3,3.28,3.37,0.746,0.995,0.56,local source,no visit - report the site to the Council
-SL027,0.761,0.064,1.09,0.0,55.9,224390,9.4,4.58,1.99,0.946,0.997,0.73,local source,no visit - report the site to the Council
-SL012,0.778,0.038,1.19,0.0,42.9,228033,19.8,4.57,1.83,0.832,0.996,0.49,local source,no visit - report the site to the Council
-SL019,0.658,0.069,1.78,0.0,42.4,206918,18.4,5.98,1.79,0.886,0.484,0.52,single-channel fault,site visit - replace the unit
-SL008,0.682,0.081,-0.66,0.0,97.8,175755,9.3,0.83,2.74,0.694,0.987,0.24,single-channel fault,site visit - replace the unit
-SL044,0.722,0.042,-1.12,0.0,90.5,284911,9.7,1.46,1.8,0.862,0.981,0.3,single-channel fault,site visit - replace the unit
+SL056,0.699,0.081,1.35,0.0,72.4,141375,20.1,3.95,1.12,0.549,0.995,0.83,intermittent fault,site visit - inspect
+SL041,0.726,0.026,-0.46,0.0,57.6,75919,17.7,3.44,1.16,0.852,0.991,0.79,intermittent fault,site visit - inspect
+SL029,0.763,-0.001,-1.14,0.0,53.8,38397,15.2,3.33,1.21,0.888,0.996,0.9,intermittent fault,site visit - inspect
+SL020,0.787,0.02,0.19,0.0,65.2,167158,15.4,3.45,1.5,0.851,0.997,0.79,intermittent fault,site visit - inspect
+SL051,0.318,0.017,-2.16,0.0,37.8,64725,8.0,22.02,2.78,0.954,0.998,0.01,local source,no visit - report the site to the Council
+SL003,0.587,-0.046,0.71,0.0,66.3,169460,36.2,5.16,1.72,0.444,0.996,0.7,local source,no visit - report the site to the Council
+SL015,0.694,0.054,1.66,0.0,48.7,110061,31.5,5.41,1.83,0.76,0.996,0.47,local source,no visit - report the site to the Council
+SL027,0.762,0.064,1.1,0.0,55.9,225020,9.4,4.58,2.01,0.946,0.997,0.73,local source,no visit - report the site to the Council
+SL012,0.778,0.039,1.15,0.0,42.9,228033,19.8,4.57,1.83,0.832,0.996,0.49,local source,no visit - report the site to the Council
+SL019,0.658,0.069,1.83,0.0,42.4,206918,18.4,5.98,1.79,0.886,0.484,0.52,single-channel fault,site visit - replace the unit
+SL008,0.682,0.082,-0.67,0.0,97.8,175755,9.3,0.83,2.74,0.694,0.987,0.24,single-channel fault,site visit - replace the unit
+SL044,0.722,0.042,-1.14,0.0,90.5,284911,9.7,1.46,1.8,0.862,0.981,0.3,single-channel fault,site visit - replace the unit
 SL035,0.725,0.028,0.68,0.0,70.9,291097,14.7,4.98,1.36,0.885,0.333,0.56,single-channel fault,site visit - replace the unit
-SL021,0.742,0.036,1.43,0.0,84.8,217335,21.3,3.0,1.21,0.722,0.201,0.62,single-channel fault,site visit - replace the unit
-SL042,0.748,0.034,0.66,0.0,65.4,206629,13.3,4.71,3.08,0.875,0.412,0.29,single-channel fault,site visit - replace the unit
-SL001,0.756,-0.005,-0.65,0.0,91.4,375711,9.5,2.16,1.57,0.853,0.994,0.69,single-channel fault,site visit - replace the unit
-SL011,0.768,0.011,-0.36,0.0,92.7,187920,5.2,1.44,2.77,0.902,0.868,0.27,single-channel fault,site visit - replace the unit
-SL034,0.775,0.028,0.4,0.0,83.8,245304,10.7,2.72,2.0,0.85,0.185,0.38,single-channel fault,site visit - replace the unit
-SL026,0.781,-0.031,-1.07,0.0,90.5,213701,4.2,1.56,1.81,0.896,0.996,1.24,single-channel fault,site visit - replace the unit
-SL037,0.852,0.006,-0.09,0.0,97.7,777328,9.3,3.0,1.74,0.938,0.991,0.74,single-channel fault,site visit - replace the unit
-SL006,0.46,0.278,0.55,0.0,79.0,235416,9.3,1.11,2.33,0.915,0.994,0.58,unresolved,keep under review
-SL022,0.582,0.144,-0.92,0.0,48.2,113195,12.2,3.08,2.44,0.874,0.994,0.44,unresolved,keep under review
-SL028,0.583,-0.05,-0.81,0.0,78.6,17237,10.6,1.54,2.2,0.882,0.991,,unresolved,keep under review
-SL062,0.706,0.045,-1.1,0.0,88.9,112053,3.3,1.39,4.94,0.85,0.998,0.76,unresolved,keep under review
-SL045,0.717,0.025,-2.06,0.0,83.4,68808,14.9,1.48,2.66,0.68,0.987,0.81,unresolved,keep under review
-SL016,0.749,0.069,-1.28,0.0,59.5,141584,9.9,1.91,3.14,0.873,0.993,0.91,unresolved,keep under review
-SL023,0.759,-0.084,-1.23,0.0,85.5,61017,14.9,1.09,1.89,0.663,0.987,0.64,unresolved,keep under review
-SL029,0.763,-0.003,-1.14,0.0,53.8,38397,15.2,3.33,1.21,0.888,0.996,0.9,unresolved,keep under review
-SL040,0.778,0.04,-0.2,0.0,64.2,156187,10.2,2.68,1.29,0.931,0.996,0.62,unresolved,keep under review
-SL055,0.779,0.013,0.16,0.0,68.9,101880,10.7,3.0,1.05,0.93,0.806,1.02,unresolved,keep under review
-SL005,0.786,0.012,-1.07,0.0,49.8,95880,10.4,2.95,2.18,0.929,0.997,0.61,unresolved,keep under review
-SL009,0.836,0.023,-1.13,0.0,57.1,36754,8.3,2.27,0.84,0.942,0.993,0.87,unresolved,keep under review
-SL068,0.846,-0.005,-1.08,0.0,35.9,29305,6.4,2.97,3.02,0.944,0.996,0.67,unresolved,keep under review
+SL021,0.742,0.037,1.42,0.0,84.8,217335,21.3,3.0,1.21,0.722,0.201,0.62,single-channel fault,site visit - replace the unit
+SL042,0.748,0.035,0.63,0.0,65.6,207679,13.2,4.71,3.16,0.876,0.413,0.29,single-channel fault,site visit - replace the unit
+SL001,0.756,0.001,-0.55,0.0,91.4,375711,9.5,2.16,1.57,0.853,0.994,0.69,single-channel fault,site visit - replace the unit
+SL011,0.768,0.012,-0.34,0.0,92.7,187920,5.2,1.44,2.77,0.902,0.868,0.27,single-channel fault,site visit - replace the unit
+SL034,0.775,0.03,0.45,0.0,83.8,245306,10.7,2.72,2.0,0.85,0.185,0.38,single-channel fault,site visit - replace the unit
+SL026,0.781,-0.019,-0.87,0.0,90.5,214595,4.2,1.56,1.79,0.892,0.996,1.24,single-channel fault,site visit - replace the unit
+SL037,0.852,0.006,-0.1,0.0,97.7,786685,9.3,3.0,1.74,0.938,0.991,0.74,single-channel fault,site visit - replace the unit
+SL006,0.46,0.279,0.52,0.0,79.0,235416,9.3,1.11,2.33,0.915,0.994,0.58,unresolved,keep under review
+SL022,0.582,0.143,-0.92,0.0,48.2,113195,12.2,3.08,2.44,0.874,0.994,0.44,unresolved,keep under review
+SL028,0.583,-0.052,-0.82,0.0,78.6,17237,10.6,1.54,2.2,0.882,0.991,,unresolved,keep under review
+SL062,0.706,0.047,-1.1,0.0,88.9,112879,3.3,1.39,4.93,0.85,0.998,0.76,unresolved,keep under review
+SL045,0.717,0.026,-2.07,0.0,83.4,68808,14.9,1.48,2.66,0.68,0.987,0.81,unresolved,keep under review
+SL016,0.749,0.066,-1.42,0.0,59.5,142057,9.8,1.91,3.17,0.873,0.993,0.91,unresolved,keep under review
+SL023,0.759,-0.072,-1.02,0.0,85.5,61017,14.9,1.09,1.89,0.663,0.987,0.64,unresolved,keep under review
+SL040,0.778,0.043,-0.21,0.0,64.2,156187,10.2,2.68,1.29,0.931,0.996,0.62,unresolved,keep under review
+SL005,0.786,0.013,-1.07,0.0,49.8,95880,10.4,2.95,2.18,0.929,0.997,0.61,unresolved,keep under review
+SL032,0.806,0.01,0.9,0.0,78.5,48483,17.4,2.82,0.89,0.475,0.987,0.35,unresolved,keep under review
+SL009,0.836,0.023,-1.15,0.0,57.1,36754,8.3,2.27,0.84,0.942,0.993,0.87,unresolved,keep under review
+SL068,0.846,-0.003,-1.06,0.0,35.9,29305,6.4,2.97,3.02,0.944,0.996,0.67,unresolved,keep under review
