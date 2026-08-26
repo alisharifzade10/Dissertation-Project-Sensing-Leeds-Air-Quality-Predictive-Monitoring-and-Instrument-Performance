@@ -1,257 +1,250 @@
 # Sensing Leeds Air Quality: Predictive Monitoring and Instrument Performance
 
-MSc dissertation project, MATH5872M (Data Science and Analytics), University of Leeds.
+MSc dissertation project (MATH5872M, University of Leeds, School of Mathematics).
+Analysis of the Leeds PurpleAir PM2.5 low-cost sensor network, operated by the
+University of Leeds with Leeds City Council.
 
-**Author:** Ali Sharifzade
-**Supervisors:** Jim McQuaid (Faculty of Environment), Luisa Cutillo (School of Mathematics)
-
----
-
-## 1. What this project does
-
-Leeds runs a network of roughly 48 outdoor PurpleAir PA-II low-cost sensors measuring PM2.5. Each unit logs a reading about every two minutes, and the archive used here runs from March 2022 to July 2026, which is on the order of 25 million rows before any filtering.
-
-Two questions drive the analysis, and both come from the practical needs of whoever operates the network:
-
-1. **Event detection.** When PM2.5 rises at a site, is that a real local pollution episode worth reporting to Leeds City Council, or is it an artefact of the instrument?
-2. **Fault detection.** Which units are drifting, half-dead, or reporting nonsense, so that a site visit can be scheduled instead of the data being trusted?
-
-The two questions are the same question asked from opposite sides. A sensor that disagrees with its neighbours is either seeing something they cannot see, or is broken. Separating those two cases is the core methodological problem of the dissertation.
-
-Everything in this repository is built to answer that separation question in a reproducible way: ingest the raw archive once, clean it according to published low-cost-sensor practice, decompose each site into a network-wide component plus a local residual, and then flag both events and faults from that decomposition.
+**Author:** Ali Sharifzade (202007327)
+**Supervisors:** Prof. Jim McQuaid (Faculty of Environment), Dr Luisa Cutillo (School of Mathematics)
 
 ---
 
-## 2. Repository layout
+## Overview
+
+Low-cost optical sensors let a local authority measure PM2.5 at a spatial density
+that regulatory instruments cannot reach, but they create a problem regulatory
+networks do not have: when one sensor reports something its neighbours do not,
+it is not obvious whether the air is unusual or the instrument is.
+
+This project builds a reproducible pipeline over 25.4 million two-minute readings
+from 47 outdoor PurpleAir PA-II units across Leeds (March 2022 – August 2026) and
+uses three mutually independent network-internal diagnostics to separate genuine
+local pollution from instrument problems, without any co-located reference
+instrument.
+
+## Research questions
+
+1. Can the network be shown to detect real, city-wide pollution events?
+2. Which sensors disagree with the network, and how much evidence stands behind
+   each disagreement?
+3. Is a sensor's disagreement explained by its calibration, or by the air at its
+   site?
+4. For the disagreements calibration does not explain, does the two-minute record
+   look like particles or like electronics?
+5. Can the result be turned into an actionable list for the network operator?
+
+## Dataset
+
+| | |
+|---|---|
+| Source | Leeds PurpleAir network archive (University of Leeds / Leeds City Council) |
+| Instrument | PurpleAir PA-II, two Plantower PMS5003 channels per unit |
+| Period | 7 March 2022 – 23 August 2026 (1,631 days) |
+| Resolution | ~2 minutes (720 records per complete day) |
+| Volume | 25,404,384 raw readings across 47 sensors |
+| Variables | UTC timestamp, PM2.5 channel A and B (`cf_atm`), temperature (°F), relative humidity (%) |
+| Reference data | Hourly PM2.5 from AURN Leeds Centre, Defra UK-AIR |
+
+Study-set construction: 68 registered sensors → 48 pass the geographic /
+outdoor / genuine-deployment rules → 47 have data on disk → 43 have ≥100 valid
+days and enter the similarity matrix → 4 references + 34 diagnosed candidates.
+
+**The raw archive is not redistributed.** It is held by the University and the
+Council. `data/` is gitignored.
+
+## Methodology
+
+**Quality flags** (flag, never delete): implausible range (>1000 µg/m³ on either
+channel); two-band A/B channel disagreement following Byrne et al. (2023), with
+an absolute floor of 1.0 µg/m³ added because Leeds air is clean enough for
+counting noise to trip the relative test alone; and a frozen-output detector for
+the failure mode the A/B test cannot see.
+
+**Correction and aggregation:** Barkjohn et al. (2021) humidity correction applied
+to the channel mean. Hourly means require ≥15 clean readings (justified by a
+contiguous-block subsampling test); daily means require ≥180 (justified by a
+survival curve).
+
+**Concentration similarity index** (Byrne et al., 2024), computed on daily means
+over a lifetime window and over the final 365 days, with the network-wide shift
+removed before any sensor is described as deteriorating.
+
+**Spatial decomposition** (Lenschow et al., 2001): C_i(t) = B(t) + I_i(t), with
+B(t) the 10th percentile across ≥12 reporting sensors, computed leave-one-out so
+no sensor helps set the level it is measured against.
+
+**Instrument bias:** per-sensor `sensor = gain × network + offset` fitted on
+spatially uniform hours against a leave-one-out network median, on decile-binned
+medians.
+
+**Diagnosis** (four steps): harmonise and recompute the CSI; convert an observed
+CSI into an equivalent fault size using response curves recomputed on real Leeds
+series; test the residual for seasonal organisation using σ_ΔPM; and characterise
+the excursions by lag-1 autocorrelation and A/B channel correlation. Verdicts are
+assigned by a stated rule in `src/config.py`, not by judgement.
+
+**Validation:** faults of known type and size planted in real data — a fixed
+offset for the calibration branch, and smooth two-channel bumps versus one-channel
+noise at three severities for the local-source and channel branches.
+
+## Notebook workflow
+
+Run in order; each notebook consumes the previous one's saved output.
+
+| Notebook | Purpose | Key output |
+|---|---|---|
+| `00_check_data` | Pre-flight check on archive access and file structure | — |
+| `01_filter_sensors` | Study-set selection with a full decision log | `study_sensors.csv` |
+| `02_combine_sensors` | Combine daily CSVs; coverage inventory | per-sensor Parquet, `sensor_inventory.csv` |
+| `03_explore_quality` | Pre-cleaning inspection of three contrasting sensors | evidence for the flag rules |
+| `04_cleaning` | Apply flags; justify every threshold | `cleaned/*.parquet`, `cleaning_summary.csv` |
+| `05_csi` | Daily matrix; pairwise CSI; lifetime vs recent | `csi_matrix.csv`, `csi_sensor_ranking.csv` |
+| `06_events` | Hourly matrix; Bonfire Night analysis | `bonfire_enhancement.csv` |
+| `07_baseline` | Baseline separation, source indices, instrument bias, AURN check | `instrument_bias.csv` |
+| `08_event_or_fault` | Diagnosis, verdicts, validation | `sensor_verdicts.csv`, `nb08_final_summary.csv` |
+
+`FORCE_REBUILD = False` in NB02 skips sensors that already have a Parquet, making
+re-runs near-instant. For routine data refreshes use `python -m src.loader`,
+which re-reads only new or changed daily files via a manifest.
+
+## Main findings
+
+**The network detects real events.** Bonfire Night produced network-median
+enhancements of 35.0–58.9 µg/m³ in each of 2022–2025, a factor of 7.5–10.1 above
+matched control evenings, registering at all 20 sensors with sufficient coverage
+(+22.9 to +101.3 µg/m³).
+
+**The baseline is real.** The network's own 10th-percentile baseline correlates
+at r = 0.77 with the independent AURN reference instrument at Leeds Centre over
+1,217 days.
+
+**Instrument agreement is good.** Only 3 of 43 sensors are out by more than
+2 µg/m³ within their fitted range; the largest additive offset is 1.91 µg/m³.
+
+**The similarity index is not a site-visit list.** Recomputing its response to
+synthetic faults at Leeds concentrations shows it is highly sensitive to additive
+offsets (1 µg/m³ drives mean CSI from 0.78 to 0.64) and nearly blind to gain
+(a gain of 0.85 costs about 0.01). The two lowest-scoring sensors therefore score
+low for opposite reasons:
+
+- **SL050** (CSI 0.320): its humidity channel reports a median of exactly 100%
+  across 637,225 readings, which drives the correction below zero and floors
+  61.5% of its record at zero. Harmonisation recovers it to 0.637. The fault is
+  in the auxiliary channel feeding the correction, not in the optical counters.
+- **SL051** (CSI 0.318): harmonisation recovers only +0.017. Its fitted bias is a
+  gain deficit (0.83) rather than an offset (+0.39), and the index barely responds
+  to gain, so calibration is excluded. The residual excursions are seasonal
+  (winter:summer 2.78), temporally smooth (lag-1 0.954), seen by both counters
+  (channel correlation 0.998) and shared with none of its five nearest neighbours
+  (1% of the excess). This is consistent with a genuine hyper-local source.
+
+**Verdicts.** Of 34 candidates: 11 single-channel behaviour, 12 unresolved,
+5 possible local source, 4 intermittent fault, 2 calibration fault, 0 frozen.
+
+**Validation.** Planted local-source events were recovered in 81 of 81
+simulations. Planted channel faults were recovered in 25.9% of cases at the
+weakest severity, rising to 81.5% at the strongest.
+
+## Limitations
+
+- The Barkjohn correction is itself a source of artefact: a network median of
+  10.8% of clean readings are floored at zero, which interacts directly with the
+  CSI's handling of zeros. Its coefficients are US-fitted and derived on `cf_1`,
+  while this archive exports `cf_atm` (affects 6.06% of readings).
+- Candidate screening is deliberately broad (34 of 43 sensors), so "candidate"
+  carries little information on its own; all conclusions rest on the verdict stage.
+- The reference group was chosen on similarity and site type, not on the absence
+  of local sources, which makes the fluctuation bar conservative and explains much
+  of the unresolved count.
+- The A/B channel-correlation test is a pooled Pearson correlation on raw readings
+  and is sensitive to a small number of extreme values.
+- Channel-fault detection is severity-dependent (25.9% to 81.5%).
+- Clustering the CSI matrix produced a degenerate partition (42 sensors and 1);
+  reported as a negative result, mirroring the weak clustering Byrne et al. (2024)
+  report for Cork.
+- **No verdict has been checked against a physical site visit.** Confidence rests
+  on agreement between independent tests and on synthetic faults with known
+  ground truth.
+- Only 48.4% of hours at the median sensor are adequately sampled, which forced
+  daily aggregation for the similarity work.
+
+## Reproducibility
+
+Every path, column name and threshold is defined once, in `src/config.py`.
+Notebooks orchestrate and visualise; all reusable logic lives in `src/`. Random
+operations are seeded (`numpy.random.default_rng`, and an MD5-derived stable seed
+in the NB08 synthetic validation, so results do not change between kernel
+restarts). Intermediate data are Parquet.
+
+To reproduce:
+
+```bash
+git clone <repo>
+cd <repo>
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+# point DATA_DIR in src/config.py at the raw archive
+jupyter lab            # then run notebooks 01 → 08 in order
+```
+
+## Software requirements
+
+- Python 3.14
+- pandas, numpy, scipy, scikit-learn, pyarrow
+- matplotlib, contextily, pyproj
+- requests (AURN download in NB07)
+- jupyter / nbformat
+
+## Repository structure
 
 ```
-Dissertation Sensing Leeds Air Quality/
-├── src/                        # importable package, all reusable logic
-│   ├── __init__.py
-│   ├── config.py               # thresholds, paths, constants (single source of truth)
-│   ├── loader.py               # manifest-driven incremental ingestion to Parquet
-│   ├── cleaning.py             # A/B channel flagging + humidity correction
-│   ├── csi.py                  # Concentration Similarity Index
-│   ├── baseline.py             # spatial baseline, offset/gain, diurnal, site typing
-│   └── aurn_reader.py          # DEFRA AURN flat-file downloader and parser
-├── notebooks/                  # numbered 00-08, narrative analysis
-├── data/
-│   ├── raw/                    # symlink / path to OneDrive archive (not in git)
-│   └── processed/              # Parquet outputs (gitignored)
-├── figures/                    # exported figures used in the report
-├── reports/                    # milestone documents
+.
+├── src/
+│   ├── config.py        # all paths, column names and thresholds — single source of truth
+│   ├── loader.py        # incremental, manifest-based ingestion of daily CSVs
+│   ├── cleaning.py      # the three quality flags and the Barkjohn correction
+│   ├── csi.py           # pairwise concentration similarity index and ranking
+│   ├── baseline.py      # spatial baseline, local increment, offset-gain fit, harmonisation
+│   ├── highfreq.py      # sigma_DPM filter, exposure fractions, excursion structure
+│   └── synthetic.py     # fault injection for the CSI response curves
+├── notebooks/
+│   ├── 00_check_data.ipynb
+│   ├── 01_filter_sensors.ipynb
+│   ├── 02_combine_sensors.ipynb
+│   ├── 03_explore_quality.ipynb
+│   ├── 04_cleaning.ipynb
+│   ├── 05_csi.ipynb
+│   ├── 06_events.ipynb
+│   ├── 07_baseline.ipynb
+│   └── 08_event_or_fault.ipynb
+├── outputs/
+│   ├── tables/          # every CSV referenced in the dissertation
+│   └── figures/         # every figure
+├── data/                # gitignored — raw and processed data are not redistributed
+├── report/              # LaTeX source and compiled dissertation
+├── requirements.txt
 └── README.md
 ```
 
-The split is deliberate. Notebooks tell the story and produce figures; they do not define constants and they do not hold algorithms. Anything that could be reused, tested, or quoted in the methodology chapter lives in `src/`. This also satisfies the handbook requirement that code be referenced by module name in the main text rather than pasted into it.
-
-### Data locations
-
-| What | Where |
-|---|---|
-| Raw PurpleAir CSVs | `C:\Users\user\OneDrive - University of Leeds\SEE AQ Projects-PURPLEAIR - sensor_data` |
-| Project root | `C:\Users\user\Desktop\University\Dissertation\Dissertation Sensing Leeds Air Quality\` |
-| Processed Parquet | `data/processed/` (gitignored) |
-| AURN reference CSVs | fetched on demand by `aurn_reader.py`, cached locally |
-
-The GitHub repository holds code only. No sensor data is committed, partly for size and partly because the archive sits on university storage.
-
----
-
-## 3. Environment
-
-- Python 3.14 in a local `.venv`
-- VS Code with the Jupyter extension
-- Core libraries: `pandas`, `pyarrow`, `matplotlib`, `folium`, `contextily`, `nbformat`, `nbclient`
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate          # Windows
-pip install -r requirements.txt
-```
-
-Notebooks import from `src/` as a package, so run them with the project root on the path. During active development, put this at the top of each notebook:
-
-```python
-%load_ext autoreload
-%autoreload 2
-# keep the magic on its own line, above the imports
-```
-
-Stale modules caused several hours of confusion early in the project: a file was edited on disk, the notebook kept raising the identical error, and the cause was the old module still sitting in `sys.modules`. If `%autoreload` is not enough, force it:
-
-```python
-import importlib, src.cleaning
-importlib.reload(src.cleaning)
-```
-
----
-
-## 4. Pipeline
-
-### 4.0 Configuration (`src/config.py`)
-
-Every threshold, path and constant lives here. Nothing is hard-coded in a notebook. This started as tidiness and became a correctness requirement: an earlier version of `csi.py` imported its constants inside a `try/except ImportError` block with a misspelled name, so the import silently failed and the module quietly ran on fallback values for several days. The fix was to import explicitly and let a bad name raise.
-
-Constants of note:
-
-| Name | Value | Basis |
-|---|---|---|
-| `MIN_READINGS_PER_DAY` | 180 | Survival test: retains 90.6% of sensor-days and 43/44 sensors; the survival cliff sits between 240 and 360 |
-| `MIN_READ_PER_HOUR` | 15 | 50% completeness at 2-min spacing; subsampling test gives ~4% typical error, ~16% at the 90th percentile |
-| `MIN_SENSORS_PER_HOUR` | 5 | Minimum reporting sensors for a network median or baseline to be formed |
-| `LOCAL_TZ` | `Europe/London` | Applied once, at the point of resampling |
-| `CSI_PM_LIM` | 15 µg/m³ | Byrne et al. (2024) concentration breakpoint |
-| `CSI_C_UPPER` / `CSI_C_LOWER` | 0.2 / 0.7 | Strict limit above the breakpoint, lenient at or below |
-| `MIN_COMMON_DAYS` | 30 | Suppresses a CSI computed from negligible deployment overlap |
-| `MIN_VALID_DAYS` | 100 | Sensor inclusion threshold for the pairwise matrix |
-| `BASELINE_Q` | 0.10 | Quantile across sensors defining the regional baseline |
-| `BASELINE_WINDOW` | `7D` | Long enough to span a synoptic episode, short enough to follow seasonal change |
-| `NIGHT_HOURS` | (1, 5) | Well-mixed conditioning hours for the instrument bias diagnostic |
-| `BONFIRE_YEARS` | 2022–2025 | Event study years |
-
-`BASELINE_Q` is set at the 10th percentile rather than the minimum for a specific reason: the minimum is set by a single sensor at every timestep, and would be won every hour by whichever unit reads systematically low — which is precisely the fault the pipeline is trying to detect.
-
-Timezone handling is worth flagging in the write-up. Raw timestamps are UTC; diurnal profiles and Bonfire Night windows only make sense in local time. Converting in one place avoids the classic hour-shifted evening peak in October and November.
-
-### 4.1 Ingestion (`src/loader.py`)
-
-The raw archive is a large pile of per-sensor CSVs that grows over time. `loader.py` keeps a manifest of files already ingested along with their size and modification time, so a re-run only processes what is new or changed. Output is columnar Parquet partitioned for fast per-sensor and per-period reads.
-
-This matters at 25 million rows. Reading the archive from CSV every time is a multi-minute cost per notebook run; reading Parquet is seconds, and the incremental manifest means adding a month of new data does not mean reprocessing four years.
-
-### 4.2 Cleaning (`src/cleaning.py`)
-
-Two stages, in this order.
-
-**A/B channel agreement, after Byrne et al. (2023).** Each PA-II holds two Plantower PMS5003 units logging in parallel. When both are healthy they track each other closely, so disagreement between the channels is direct evidence of a hardware problem: a blocked inlet, an insect, a failing laser, a fan losing speed. Readings where the two channels disagree beyond the configured absolute and relative tolerance are flagged rather than silently dropped, so the flag rate itself becomes a diagnostic.
-
-**Humidity correction, after Barkjohn et al. (2021).** Plantower sensors overestimate PM2.5 in humid conditions because water uptake grows the particles they are optically sizing. Barkjohn's US-wide correction is applied per reading.
-
-Two details that took work and should both appear in the methodology chapter:
-
-- The correction is applied to the **mean of channels A and B**, not to channel A alone. An early version used channel A only, which throws away half the instrument and biases the result toward whichever channel happens to be dirtier.
-- Barkjohn's coefficients were fitted in the United States against `cf_1` data. This project uses `cf_atm`, following Giordano et al. (2021). That is a defensible choice for outdoor ambient work, but it is a known caveat and is the most likely explanation for part of the underreading discussed in section 5.
-
-### 4.3 Similarity (`src/csi.py`)
-
-The Concentration Similarity Index of Byrne et al. (2024) scores every pair of sensors on how similar their concentration-time profiles are, using different tolerance bands above and below a PM concentration limit. The logic is that a 3 µg/m³ discrepancy means something very different at 5 µg/m³ than at 50 µg/m³.
-
-Byrne et al. compute the CSI on hourly averages. **This project computes it daily, and that adaptation is my own.** The reason is coverage: only about 36% of hours in the Leeds archive have enough simultaneously reporting sensors to support a fair network-wide comparison, so hourly CSI would be computed on a non-random subset of hours biased toward periods when the network happened to be healthy. Daily resampling brings coverage to a level where the pairwise matrix is populated across the full four years. The trade-off is a loss of diurnal detail in the CSI itself, which is recovered separately through the diurnal profiling in `baseline.py`.
-
-The adaptation is described as mine in the write-up. It is not attributed to Byrne et al., who should be credited with the index and its thresholds, not with the daily variant.
-
-### 4.4 Baseline decomposition and instrument performance (`src/baseline.py`)
-
-This module exists because of supervisor feedback on Milestone 2, which asked for more applied methodology beyond cleaning. It does four things.
-
-**Spatial baseline.** This follows the general concept of Lenschow et al. (2001), who separate a measured concentration into regional, urban and local components, but the implementation differs and the difference should be stated in the write-up: Lenschow subtract measurements from three distinct station types, whereas this network has no such tiering, so the regional component is estimated as a low quantile across the reporting sensors at each timestep. Subtracting it from each site leaves a local residual, which is the quantity that actually matters for reporting a local event to the council. A citywide rise on a still, cold day is not a local event; a rise at one site while its neighbours sit flat is.
-
-**Offset and gain.** Regressing each sensor against the network baseline gives a slope and an intercept per unit. A healthy sensor lands near unit slope and near-zero intercept. A persistent positive intercept points at contamination or drift; a slope far from one points at a scaling or channel problem. Byrne et al. show that a 5 µg/m³ offset alone roughly halves the CSI, which ties the two diagnostics together neatly.
-
-**Diurnal profiling.** Median profile by hour of day, in local time, per site and per season. Residential solid-fuel burning shows up as an evening peak; traffic sites show a twin-peaked weekday profile that flattens at weekends.
-
-**Site classification.** Sites are grouped by the shape of their diurnal profile and their CSI relationships rather than by their address, which follows the finding in Byrne et al. (2024) that location *type* predicts similarity better than physical proximity does.
-
-### 4.5 Reference comparison (`src/aurn_reader.py`)
-
-DEFRA's Automatic Urban and Rural Network provides reference-grade measurements at a small number of Leeds sites, which is the only external check available on absolute concentration. Two stations fall inside the study area, and their official DEFRA classification happens to map onto the outer tiers of the baseline decomposition:
-
-| Site | Code | Coordinates | DEFRA type | PM2.5 method |
-|---|---|---|---|---|
-| Leeds Centre | `LEED` | 53.80378, −1.546472 | Urban Background | FIDAS |
-| Headingley Kerbside | `LED6` | 53.819972, −1.576361 | Urban Traffic | BAM |
-
-Each station is paired with its nearest PurpleAir unit. Barkjohn-corrected values are compared against a locally fitted correction on a chronological 70/30 train/test split, so the local fit is evaluated on held-out data rather than on the period it was fitted to. The kerbside-minus-background difference between the two reference instruments also gives a genuine traffic increment, which is checked against the network-derived traffic index from the baseline notebook.
-
-The standard route (`pyaurn` via `pyreadr`) does not work against DEFRA's current RData exports, so this module downloads and parses the flat-file CSVs directly. Four problems had to be solved and each is a small trap:
-
-- DEFRA blocks the default Python user agent, so a browser-like `User-Agent` header is required.
-- A failed or truncated response was being written to the local cache, so every later run read the corrupt copy. The cache now only writes on a validated response.
-- The CSVs carry a four-line banner above the real header, so the header row has to be located rather than assumed.
-- DEFRA writes midnight as hour 24 of the previous day. `01-01-2022 24:00` means the final hour of 1 January, and it crashes every standard datetime parser. The parser normalises it before conversion.
-
----
-
-## 5. Results so far
-
-**SL051 (Bramham) is the strongest fault candidate.** It is flagged independently by three methods that do not share inputs. It has the lowest lifetime mean CSI in the network (0.300); it records the highest network mean daily PM2.5 (7.7 µg/m³) despite sitting at a rural site, where the opposite would be expected; and the well-mixed-hours regression against the spatial baseline returns an offset of +1.36 µg/m³ with a gain of 0.649. Across the network, bias magnitude and CSI are negatively correlated by Spearman rank, which is the expected direction and supports using CSI as a screening statistic for instrument problems.
-
-**The recent-window CSI separates chronic from developing faults.** SL051's recent (365-day) CSI recovers to roughly 0.65, so its problems are largely historical — the lifetime matrix alone would have sent a technician to a unit that is currently behaving. The opposite case is **SL006**, which falls from a lifetime CSI of 0.47 to 0.26 in the recent window and is the clearest newly deteriorating sensor in the network. Running both windows is what makes the ranking actionable rather than merely descriptive.
-
-**SL037 has the worst raw A/B disagreement rate but a high CSI after cleaning.** 86.6% of its readings are flagged, and its channel A sat stuck near 3,333 µg/m³ for months. Yet once the flagged readings are removed, the survivors look unremarkable against the network. This is the most useful single result in the project so far, because it shows the two detectors are not redundant: A/B disagreement catches intermittent hardware failure that cleaning then removes, while CSI catches systematic drift shared by both channels, which cleaning cannot see. Either one alone would miss a class of fault.
-
-**Bonfire Night is a positive control.** Every year from 2022 to 2025 produces an enhancement of 35–62 µg/m³ over the control baseline, a ratio of 7 to 11 fold, with correct timing and a plausible spatial gradient. A pipeline that failed to recover an event this large would not be worth trusting on subtler ones. Note that the 3 to 7 November exclusion window applies only to the control baseline used for the enhancement table; raw time series are plotted unexcluded.
-
-**AURN comparison shows the sensors read low.** After A/B cleaning and Barkjohn correction, PurpleAir units read at 52 to 67% of the co-located reference value. A locally fitted correction roughly halves out-of-sample error at Headingley — MAE 1.99 µg/m³ against 3.82 for Barkjohn on held-out data — which suggests the shortfall is a correctable calibration problem rather than irreducible sensor noise. The framing in the dissertation is still open. The leading explanation is the `cf_1` versus `cf_atm` mismatch noted in section 4.2, since Barkjohn's coefficients were fitted against `cf_1`. UK aerosol composition and humidity regime differing from the US fitting set is a plausible secondary contributor. The honest position is that the network is well suited to relative and temporal comparison and should not be quoted as an absolute concentration without local calibration.
-
-**Negative result: the England World Cup match analysis.** The hypothesis was that traffic-related PM2.5 would drop during England matches. It did not, or at least not detectably above the day-to-day variance. This is reported briefly as a negative result rather than dropped, since it bounds the sensitivity of the method.
-
----
-
-## 6. Things that went wrong, and what fixed them
-
-Kept here because they cost real time and because several of them belong in the dissertation as methodological caveats rather than being quietly buried.
-
-| Problem | Resolution |
-|---|---|
-| Barkjohn correction applied to channel A only | Applied to the A/B mean instead |
-| CSI daily adaptation initially attributed to Byrne et al. | Correctly described as my own adaptation |
-| Misspelled config name inside `try/except` silently used fallback CSI constants | Explicit imports, no swallowed `ImportError` |
-| Edits to `.py` files not picked up by the notebook | `%autoreload 2` plus explicit `importlib.reload()` |
-| Shared matplotlib locator and formatter objects across axes in `csi.py` | Construct fresh locator/formatter per axis |
-| Thresholds drifting between notebook and module | All thresholds moved to `config.py` |
-| PurpleAir website CSV export used as a validation target | Abandoned. The site applies undocumented averaging and gap-filling, so it cannot validate raw Parquet |
-| `pyaurn` / `pyreadr` failing on DEFRA RData | Custom flat-file CSV reader |
-
----
-
-## 7. Reproducing the analysis
-
-Run the notebooks in order. Each writes its outputs to `data/processed/` and its figures to `figures/`, so later notebooks do not recompute earlier stages.
-
-| Notebook | Purpose |
-|---|---|
-| `00_check_data` | Confirms the OneDrive archive is readable and structured as expected |
-| `01_filter_sensors` | Outdoor sensors inside the Leeds bounding box; study-area map; `study_sensors.csv` (48 rows) |
-| `02_combine_sensors` | Per-sensor Parquet plus `sensor_inventory.csv` (47 rows) |
-| `03_explore_quality` | Distributions, A/B scatter, gap structure, per-sensor record counts |
-| `04_cleaning` | A/B flagging, Barkjohn correction, and the subsampling test that fixes daily resolution |
-| `05_csi` | Lifetime and recent-window CSI matrices, fault ranking, per-sensor CSI map |
-| `06_events` | Bonfire Night 2022–2025 and the England World Cup match analysis |
-| `07_baseline` | Spatial baseline, offset and gain regression, diurnal profiling, site classification |
-| `08_aurn_validation` | DEFRA reference download, sensor–reference comparison, local correction fit |
-
-One number worth stating explicitly, because it looks like a bug and is not: `study_sensors.csv` holds 48 rows and `sensor_inventory.csv` holds 47. SL071 (Kentmere) passes the study-area filter but has no data folder on disk, so it drops out at the combine step. The 48 → 47 reduction is expected behaviour.
-
-`src/loader.py` is run from the terminal rather than as a notebook. It is infrastructure: it produces no figure and makes no argument, it just rebuilds `data/processed/` incrementally so the analytical notebooks have fresh input. It depends on `02_combine_sensors` having run at least once, since it reads the `folder` column of `sensor_inventory.csv`.
-
----
-
-## 8. Still open
-
-Milestones 1 and 2 are submitted; Milestone 2 comprised a Word and PDF report with three embedded figures. Supervisor feedback on Milestone 2 asked for more applied methodology beyond cleaning, which is what motivated the baseline decomposition and the AURN validation. The pipeline now runs end to end from 00 to 08.
-
-Outstanding:
-
-- A consolidated fault-candidate list showing the evidence from each detector side by side — A/B flag rate, lifetime CSI, recent CSI, offset, gain — which is the artefact that would actually be handed to whoever schedules site visits. Each detector currently produces its own ranking in its own notebook.
-- How to frame the 52 to 67% AURN underreading. Options are to present it as an uncorrected bias with a stated cause, to fit local correction coefficients against AURN and report both, or to reframe the network's output as a relative index rather than a concentration. The second is the strongest if time allows, since it turns a caveat into a contribution.
-- Whether the predictive component in notebook 08 forecasts concentration or forecasts fault probability. The second is closer to the stated project aims and is more defensible in the viva.
-- Sensitivity analysis on `BASELINE_Q` and on the CSI daily-versus-hourly choice, to show the conclusions do not depend on a single arbitrary threshold.
-
----
-
-## 9. References
-
-Barkjohn, K. K., Gantt, B. and Clements, A. L. (2021) Development and application of a United States-wide correction for PM2.5 data collected with the PurpleAir sensor. *Atmospheric Measurement Techniques*, 14(6), 4617–4637.
-
-Byrne, R., Ryan, M., Venables, D. S., Wenger, J. C. and Hellebust, S. (2023) Highly local sources and large spatial variations in PM2.5 across a city. *Environmental Science: Atmospheres*, 3, 1123–1134.
-
-Byrne, R., Wenger, J. C. and Hellebust, S. (2024) Spatial analysis of PM2.5 using a concentration similarity index applied to air quality sensor networks. *Atmospheric Measurement Techniques*, 17, 5129–5146.
-
-Giordano, M. R. et al. (2021) From low-cost sensors to high-quality data: a summary of challenges and best practices for effectively calibrating low-cost particulate matter mass sensors. *Journal of Aerosol Science*, 158, 105833.
-
-van Zoest, V. M., Stein, A. and Hoek, G. (2018) Outlier detection in urban air quality sensor networks. *Water, Air, and Soil Pollution*, 229, 111.
-
----
-
+## References
+
+Key sources for the methods used here:
+
+- Byrne, R., Wenger, J. C. & Hellebust, S. (2024). Spatial analysis of PM2.5
+  using a concentration similarity index applied to air quality sensor networks.
+  *Atmospheric Measurement Techniques*, 17, 5129–5146.
+- Byrne, R., Ryan, K., Venables, D. S., Wenger, J. C. & Hellebust, S. (2023).
+  Highly local sources and large spatial variations in PM2.5 across a city.
+  *Environmental Science: Atmospheres*, 3, 919–930.
+- Barkjohn, K. K., Gantt, B. & Clements, A. L. (2021). Development and
+  application of a United States-wide correction for PM2.5 data collected with
+  the PurpleAir sensor. *Atmospheric Measurement Techniques*, 14, 4617–4637.
+- van Zoest, V. M., Stein, A. & Hoek, G. (2018). Outlier detection in urban air
+  quality sensor networks. *Water, Air, & Soil Pollution*, 229, 111.
+- Lenschow, P. et al. (2001). Some ideas about the sources of PM10.
+  *Atmospheric Environment*, 35(S1), S23–S33.
+
+## Acknowledgements
+
+Thanks to Leeds City Council and the School of Earth and Environment for access
+to the sensor archive, and to the schools and residents who host the units.
