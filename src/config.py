@@ -105,7 +105,7 @@ CF_EQUIV_LIMIT = 25
 # Aggregation
 # --------------------------------------------------------------------------
 # Minimum clean readings for a valid daily mean. Chosen from the survival
-# sensitivity check in notebook 04: 180 (~6 h of 2-min data) retains 90.6% of
+# sensitivity check in notebook 04: 180 (~6 h of 2-min data) retains 93.1% of
 # sensor-days and 43/44 sensors; the survival cliff sits between 240 and 360.
 MIN_READINGS_PER_DAY = 180
 
@@ -210,13 +210,15 @@ CSI_FLAG_N     = 6           # plus the N worst, whatever their score
 # be the bar a VERDICT is decided on, or "candidate" becomes a synonym for
 # "member of the network".
 AB_FLAG_LEVEL  = 50.0        # % of high-band readings A/B-flagged (candidate entry only)
-# The verdict-stage bar is set separately, at the point where NB04's ranking
-# visibly separates from the rest of the pack (the top 7 of 43 sensors sit at
-# 89% or above; the next sensor down is at 85.5%, and the range below that is
-# a smooth decline with no further gap). SL001 sits in this top group and is
-# independently corroborated in NB03: 173,000 channel-A readings pinned near
-# 3330 ug/m3 while channel B stays in range, on the same sensor.
-AB_VERDICT_LEVEL = 90.0      # % of high-band readings A/B-flagged, single-channel VERDICT
+# The verdict-stage bar is a top-decile cut, not a natural break: the
+# high-band ranking declines smoothly (97.9, 97.8, 97.7, 94.1, 92.7, 91.4,
+# 90.5, 90.5, 88.9, 86.3, ...), so 90% is a judgement call that isolates the
+# worst 8 of 47 sensors rather than a gap in the distribution. It is chosen
+# to be defensible as triage, and sensors just below it (SL062 at 88.9%)
+# are reported as worth monitoring rather than excluded. SL001, inside this
+# group, is independently corroborated in NB03: 173,197 channel-A readings
+# above the 1000 ug/m3 ceiling while channel B stayed in range.
+AB_VERDICT_LEVEL = 90.0    # % of high-band readings A/B-flagged, single-channel VERDICT
 # ... but only once there are enough high-band readings for the rate to mean
 # anything. A clean, short-lived sensor can post 100% on a dozen readings.
 AB_MIN_HIGHBAND = 500
