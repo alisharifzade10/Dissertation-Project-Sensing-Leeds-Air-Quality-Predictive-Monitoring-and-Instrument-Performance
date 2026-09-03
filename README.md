@@ -6,6 +6,7 @@ University of Leeds with Leeds City Council.
 
 **Author:** Ali Sharifzade (202007327)
 **Supervisors:** Prof. Jim McQuaid (Faculty of Environment), Dr Luisa Cutillo (School of Mathematics)
+**Submitted:** August 2026
 
 ---
 
@@ -43,11 +44,17 @@ instrument.
 | Resolution | ~2 minutes (720 records per complete day) |
 | Volume | 25,404,384 raw readings across 47 sensors |
 | Variables | UTC timestamp, PM2.5 channel A and B (`cf_atm`), temperature (°F), relative humidity (%) |
-| Reference data | Hourly PM2.5 from AURN Leeds Centre, Defra UK-AIR |
+| Reference data | Hourly PM2.5 from AURN Leeds Centre (UKA00222), Defra UK-AIR |
 
 Study-set construction: 68 registered sensors → 48 pass the geographic /
-outdoor / genuine-deployment rules → 47 have data on disk → 43 have ≥100 valid
-days and enter the similarity matrix → 4 references + 34 diagnosed candidates.
+outdoor / genuine-deployment rules → 47 have data on disk (SL71 Kentmere has no
+folder) → 43 have ≥100 valid days and enter the similarity matrix → 4 references
++ 34 diagnosed candidates.
+
+Two derived matrices carry the analysis: a daily matrix of 1,629 days × 43
+sensors (median 20 sensors reporting per day), and an hourly matrix of 39,065
+hours × 47 sensors, of which 36,293 hours clear the five-sensor bar for a
+network median.
 
 **The raw archive is not redistributed.** It is held by the University and the
 Council. `data/` is gitignored.
@@ -58,12 +65,13 @@ Council. `data/` is gitignored.
 channel); two-band A/B channel disagreement following Byrne et al. (2023), with
 an absolute floor of 1.0 µg/m³ added because Leeds air is clean enough for
 counting noise to trip the relative test alone; and a frozen-output detector for
-the failure mode the A/B test cannot see.
+the failure mode the A/B test cannot see. The similarity ranking is insensitive
+to the floor (Spearman ρ = 0.997 against 0.5 µg/m³ and 0.990 against 2.0).
 
 **Correction and aggregation:** Barkjohn et al. (2021) humidity correction applied
 to the channel mean. Hourly means require ≥15 clean readings (justified by a
 contiguous-block subsampling test); daily means require ≥180 (justified by a
-survival curve).
+survival curve, which retains 93.1% of sensor-days and 43 of 44 sensors).
 
 **Concentration similarity index** (Byrne et al., 2024), computed on daily means
 over a lifetime window and over the final 365 days, with the network-wide shift
@@ -83,6 +91,11 @@ series; test the residual for seasonal organisation using σ_ΔPM; and character
 the excursions by lag-1 autocorrelation and A/B channel correlation. Verdicts are
 assigned by a stated rule in `src/config.py`, not by judgement.
 
+**Supporting checks:** an adapted van Zoest et al. (2018) within-class Tukey-fence
+outlier test on daily local increments, hierarchical clustering of the CSI matrix,
+and an Isolation Forest ranking that combines CSI, bias and van Zoest flag rate.
+None of these decides a verdict on its own.
+
 **Validation:** faults of known type and size planted in real data — a fixed
 offset for the calibration branch, and smooth two-channel bumps versus one-channel
 noise at three severities for the local-source and channel branches.
@@ -94,13 +107,13 @@ Run in order; each notebook consumes the previous one's saved output.
 | Notebook | Purpose | Key output |
 |---|---|---|
 | `00_check_data` | Pre-flight check on archive access and file structure | — |
-| `01_filter_sensors` | Study-set selection with a full decision log | `study_sensors.csv` |
+| `01_filter_sensors` | Study-set selection with a full decision log | `study_sensors.csv`, `sensor_filter_decisions.csv` |
 | `02_combine_sensors` | Combine daily CSVs; coverage inventory | per-sensor Parquet, `sensor_inventory.csv` |
 | `03_explore_quality` | Pre-cleaning inspection of three contrasting sensors | evidence for the flag rules |
-| `04_cleaning` | Apply flags; justify every threshold | `cleaned/*.parquet`, `cleaning_summary.csv` |
-| `05_csi` | Daily matrix; pairwise CSI; lifetime vs recent | `csi_matrix.csv`, `csi_sensor_ranking.csv` |
-| `06_events` | Hourly matrix; Bonfire Night analysis | `bonfire_enhancement.csv` |
-| `07_baseline` | Baseline separation, source indices, instrument bias, AURN check | `instrument_bias.csv` |
+| `04_cleaning` | Apply flags; justify every threshold | `cleaned/*.parquet`, `cleaning_summary.csv`, `hourly_sensitivity.csv`, `coverage_check.csv` |
+| `05_csi` | Daily matrix; pairwise CSI; lifetime vs recent | `csi_matrix.csv`, `csi_sensor_ranking.csv`, `correction_clipping.csv` |
+| `06_events` | Hourly matrix; Bonfire Night analysis | `06_bonfire_enhancement.csv`, `bonfire_enhancement_per_sensor.csv` |
+| `07_baseline` | Baseline separation, source indices, instrument bias, AURN check | `instrument_bias.csv`, `07_local_increment_by_sensor.csv`, `baseline_sensitivity.csv` |
 | `08_event_or_fault` | Diagnosis, verdicts, validation | `sensor_verdicts.csv`, `nb08_final_summary.csv` |
 
 `FORCE_REBUILD = False` in NB02 skips sensors that already have a Parquet, making
@@ -112,14 +125,34 @@ which re-reads only new or changed daily files via a manifest.
 **The network detects real events.** Bonfire Night produced network-median
 enhancements of 35.0–58.9 µg/m³ in each of 2022–2025, a factor of 7.5–10.1 above
 matched control evenings, registering at all 20 sensors with sufficient coverage
-(+22.9 to +101.3 µg/m³).
+(+22.9 to +101.3 µg/m³). Measured instead as an increment above the concurrent
+spatial baseline — an independent route needing no control days — the same
+evenings run at a factor of 11–13, in the two years where enough sensors were
+reporting for a baseline to be defined.
 
 **The baseline is real.** The network's own 10th-percentile baseline correlates
 at r = 0.77 with the independent AURN reference instrument at Leeds Centre over
-1,217 days.
+1,217 days. The shared regional background accounts for roughly 30% of a typical
+reading, and is defined for 66% of hours.
+
+**No city-wide traffic signature in PM2.5.** The baseline's weekday-minus-weekend
+contrast at commuting hours is −0.05 µg/m³, and the site-specific traffic index is
+near zero across every site type. The evening excess is what varies between sites,
+reaching +7.44 µg/m³ at SL051 — the signature of intermittent combustion close to
+a sensor rather than of the working week.
 
 **Instrument agreement is good.** Only 3 of 43 sensors are out by more than
 2 µg/m³ within their fitted range; the largest additive offset is 1.91 µg/m³.
+Against enhancements of 40–65 µg/m³, that is adequate for event detection and
+poor for regulatory compliance. The bias ranking and the CSI corroborate each
+other only as a tendency (Spearman −0.38, p = 0.013 on |offset|; −0.21, not
+significant, on total bias), which is the right direction but not a confirmation.
+
+**The frozen-output flag found nothing.** Across 47 sensors and 25.4 million
+readings, no run of three hours or more frozen at a non-zero value occurs. The
+1.9 million readings frozen at exactly zero are counted and deliberately retained,
+since a PMS5003 in clean air reports zero legitimately and removing those runs
+would delete the readings that set the spatial baseline.
 
 **The similarity index is not a site-visit list.** Recomputing its response to
 synthetic faults at Leeds concentrations shows it is highly sensitive to additive
@@ -140,10 +173,23 @@ low for opposite reasons:
 
 **Verdicts.** Of 34 candidates: 11 single-channel behaviour, 12 unresolved,
 5 possible local source, 4 intermittent fault, 2 calibration fault, 0 frozen.
+Rolled up operationally across all 47 sensors, 13 were still reporting at the end
+of the study period and 34 were offline; current status and historical finding are
+reported as separate fields, since most units stopped reporting for reasons
+unrelated to their readings.
+
+**Supporting checks agree without deciding anything.** The adapted van Zoest test
+flags 3.3% of 70,047 sensor-days, with SL019 the most affected (16.3%). Clustering
+the CSI matrix returns its best silhouette at k = 2 (0.550) but partitions 42
+sensors against 1, so the score is inflated by isolation rather than reflecting
+network structure.
 
 **Validation.** Planted local-source events were recovered in 81 of 81
-simulations. Planted channel faults were recovered in 25.9% of cases at the
-weakest severity, rising to 81.5% at the strongest.
+simulations — 27 of 27 at each of three severities. Planted channel faults were
+recovered in 25.9% of cases at the weakest severity (1 hour, noise SD 7 µg/m³),
+59.3% at moderate and 85.2% at the strongest (3 hours, 15 µg/m³), for a blended
+56.8%. Most of the shortfall at the weak end is the fault never being flagged as
+unusual at all, rather than being flagged and misdiagnosed.
 
 ## Limitations
 
@@ -154,11 +200,17 @@ weakest severity, rising to 81.5% at the strongest.
 - Candidate screening is deliberately broad (34 of 43 sensors), so "candidate"
   carries little information on its own; all conclusions rest on the verdict stage.
 - The reference group was chosen on similarity and site type, not on the absence
-  of local sources, which makes the fluctuation bar conservative and explains much
-  of the unresolved count.
+  of local sources — SL017 has one of the highest winter:summer ratios in the set
+  (3.37) and sets the fluctuation bar at 18.3% of hours. That makes the bar
+  conservative and explains much of the unresolved count.
 - The A/B channel-correlation test is a pooled Pearson correlation on raw readings
-  and is sensitive to a small number of extreme values.
-- Channel-fault detection is severity-dependent (25.9% to 81.5%).
+  and is sensitive to a small number of extreme values; 5 of the 11 single-channel
+  verdicts rest on it, so inspection rather than replacement is the right action
+  for that group.
+- Some verdicts sit on a threshold (SL020 and SL018 at a winter:summer ratio of
+  1.50; SL019 and SL050 within 0.02 of the 0.50 channel-correlation bar) and
+  should be read as provisional.
+- Channel-fault detection is severity-dependent (25.9% to 85.2%).
 - Clustering the CSI matrix produced a degenerate partition (42 sensors and 1);
   reported as a negative result, mirroring the weak clustering Byrne et al. (2024)
   report for Cork.
@@ -166,7 +218,8 @@ weakest severity, rising to 81.5% at the strongest.
   on agreement between independent tests and on synthetic faults with known
   ground truth.
 - Only 48.4% of hours at the median sensor are adequately sampled, which forced
-  daily aggregation for the similarity work.
+  daily aggregation for the similarity work and left two of the four Bonfire
+  Nights without a defined spatial baseline.
 
 ## Reproducibility
 
@@ -243,6 +296,9 @@ Key sources for the methods used here:
   quality sensor networks. *Water, Air, & Soil Pollution*, 229, 111.
 - Lenschow, P. et al. (2001). Some ideas about the sources of PM10.
   *Atmospheric Environment*, 35(S1), S23–S33.
+- Rousseeuw, P. J. (1987). Silhouettes: a graphical aid to the interpretation and
+  validation of cluster analysis. *Journal of Computational and Applied
+  Mathematics*, 20, 53–65.
 
 ## Acknowledgements
 
